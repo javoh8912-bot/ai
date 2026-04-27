@@ -155,7 +155,6 @@ function switchAdminTab(t) {
 function updateProfile() {
   const newName = document.getElementById('new-name-in').value.trim();
   const newPass = document.getElementById('new-pass-in').value.trim();
-  const apiKey = document.getElementById('api-key-in').value.trim();
 
   let updateData = {};
   if (newName) {
@@ -171,12 +170,16 @@ function updateProfile() {
   if (newPass) updateData.pass = newPass;
 
   DB.updateUser(currentUser, updateData);
-
-  if (apiKey) saveApiKey(apiKey);
   
   alert("Sozlamalar saqlandi!");
   location.reload();
 }
+
+function saveMasterApiKey(v) {
+  DB.saveSetting('gemini_api_key', v);
+  GEMINI_API_KEY = v;
+}
+
 
 function setTheme(c) {
   document.documentElement.style.setProperty('--primary', c);
@@ -341,10 +344,10 @@ function saveCurrent() {
 
 function openProfile() { 
   document.getElementById('profile-modal').style.display = 'flex'; 
-  document.getElementById('api-key-in').value = GEMINI_API_KEY;
   document.getElementById('new-name-in').value = currentUser;
   
   const u = DB.getUsers().find(x => x.user === currentUser);
+
   const avBig = document.getElementById('profile-avatar-big');
   if (u && u.avatar) {
     avBig.innerHTML = `<img src="${u.avatar}">`;
@@ -355,7 +358,6 @@ function openProfile() {
 
 
 function closeProfile() { document.getElementById('profile-modal').style.display = 'none'; }
-function saveApiKey(v) { GEMINI_API_KEY = v; DB.saveSetting('gemini_api_key', v); }
 
 function renderAdmin() {
   const users = DB.getUsers();
@@ -364,7 +366,11 @@ function renderAdmin() {
   let total = 0; Object.values(chats).forEach(x => total += x.length);
   document.getElementById('stat-chats').innerText = total;
 
+  const masterKeyIn = document.getElementById('admin-api-key');
+  if(masterKeyIn) masterKeyIn.value = GEMINI_API_KEY;
+
   const table = document.getElementById('admin-table');
+
   table.innerHTML = '';
   users.forEach(u => {
     let avatar = u.avatar ? `<img src="${u.avatar}" style="width:30px; height:30px; border-radius:50%; object-fit:cover;">` : `<div style="width:30px; height:30px; border-radius:50%; background:var(--grad); display:flex; align-items:center; justify-content:center; font-size:10px;">${u.user[0]}</div>`;
