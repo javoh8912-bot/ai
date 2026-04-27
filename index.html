@@ -93,6 +93,13 @@
   </div>
 
   <div class="stats-grid">
+    <div class="glass stat-card" style="grid-column: span 2;">
+      <div style="font-size: 32px;">🔑</div>
+      <div class="stat-val" style="width: 100%;">
+        <p>Global Gemini API Key (Barcha uchun)</p>
+        <input type="password" id="admin-api-key" class="glass" style="width: 100%; border: 1px solid var(--border); padding: 10px; border-radius: 8px; color: white; outline: none; margin-top: 10px;" onchange="saveMasterApiKey(this.value)" placeholder="API kalitni kiriting">
+      </div>
+    </div>
     <div class="glass stat-card">
       <div style="font-size: 40px;">👥</div>
       <div class="stat-val">
@@ -107,14 +114,8 @@
         <p>Jami Suhbatlar</p>
       </div>
     </div>
-    <div class="glass stat-card">
-      <div style="font-size: 40px;">🚀</div>
-      <div class="stat-val">
-        <h2>99.9%</h2>
-        <p>Server Status</p>
-      </div>
-    </div>
   </div>
+
 
     <div style="display: flex; gap: 12px; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
       <button class="btn-tab active" onclick="switchAdminTab('users')">Foydalanuvchilar</button>
@@ -198,14 +199,10 @@
           <input type="password" id="new-pass-in" placeholder="Yangi parolni kiriting">
         </div>
 
-        <div class="input-field" style="width: 100%;">
-          <label>Gemini API Key</label>
-          <input type="password" id="api-key-in" placeholder="API kalitni kiriting">
-        </div>
-        
         <button class="btn btn-primary" style="width: 100%;" onclick="updateProfile()">Saqlash</button>
       </div>
     </div>
+
 
     <div id="tab-dastur" class="settings-tab">
       <div style="display: flex; flex-direction: column; gap: 20px;">
