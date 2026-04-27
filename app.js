@@ -38,7 +38,8 @@ let imageMode = false;
 let currentChat = null;
 let history = [];
 let settings = DB.getSettings();
-let GEMINI_API_KEY = settings.apiKey;
+let GEMINI_API_KEY = settings.apiKey || "AIzaSyDtUsTney3wzCo3hx-AGthnKUF1CPsZb0M";
+
 
 function handleAuth() {
   const user = document.getElementById('login-user').value.trim();
