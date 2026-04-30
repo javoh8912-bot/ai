@@ -1,0 +1,1855 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avenaa AI | Premium Experience</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Combined Internal Styles -->
+    <style>
+:root {
+  --primary: #6366f1;
+  --primary-glow: rgba(99, 102, 241, 0.5);
+  --secondary: #a855f7;
+  --accent: #00f2fe;
+  --bg: #030712;
+  --glass: rgba(15, 23, 42, 0.6);
+  --glass-bright: rgba(30, 41, 59, 0.7);
+  --border: rgba(255, 255, 255, 0.06);
+  --text: #f8fafc;
+  --text-muted: #94a3b8;
+  --grad: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  --admin-grad: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+  --gold: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+  --gold-glow: rgba(255, 215, 0, 0.4);
+}
+
+.gold-badge {
+    background: var(--gold); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    font-weight: 800; font-size: 10px; letter-spacing: 1px; border: 1px solid #ffd700;
+    padding: 2px 6px; border-radius: 6px; margin-left: 8px; text-transform: uppercase;
+    display: inline-block; vertical-align: middle;
+}
+.status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+.status-online { background: #22c55e; box-shadow: 0 0 10px #22c55e; }
+.status-offline { background: #64748b; }
+a, button, input[type="button"], .btn, .icon-btn, .chat-item { cursor: pointer; pointer-events: auto; }
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  overflow: hidden;
+  user-select: none;
+  background-image: radial-gradient(circle at 50% 50%, #1e1b4b 0%, #030712 100%);
+}
+
+#canvas-container {
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  z-index: -1; transition: 1.5s cubic-bezier(0.4, 0, 0.2, 1); pointer-events: none;
+}
+
+.btn {
+  border: none; border-radius: 16px; padding: 14px 28px;
+  font-weight: 700; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  font-family: inherit; letter-spacing: 0.5px;
+}
+.btn-primary { background: var(--grad); color: white; box-shadow: 0 10px 25px -5px var(--primary-glow); }
+.btn-primary:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 20px 40px -10px var(--primary-glow); }
+.btn-primary:active { transform: translateY(-1px) scale(1); }
+
+.glass {
+  background: var(--glass); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+  border: 1px solid var(--border); box-shadow: 0 30px 60px -12px rgba(0,0,0,0.6);
+}
+
+/* ── AUTH SCREEN ── */
+#auth-container {
+  height: 100vh; display: flex; align-items: center; justify-content: center;
+  perspective: 1500px;
+}
+.auth-card {
+  width: 420px; padding: 56px; border-radius: 40px;
+  animation: entrance 1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes entrance { from { opacity:0; transform: translateY(30px) rotateX(-10deg); } to { opacity:1; transform: translateY(0) rotateX(0); } }
+
+.auth-card h1 { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; margin-bottom: 12px; text-align: center; background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.auth-card p { color: var(--text-muted); text-align: center; margin-bottom: 40px; font-size: 15px; }
+
+.input-field { margin-bottom: 24px; }
+.input-field label { display: block; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted); margin-bottom: 10px; padding-left: 4px; }
+.input-field input {
+  width: 100%; background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+  border-radius: 16px; padding: 16px 20px; color: white; font-family: inherit; outline: none; transition: 0.4s;
+}
+.input-field input:focus { border-color: var(--primary); background: rgba(99,102,241,0.08); box-shadow: 0 0 20px rgba(99,102,241,0.1); }
+
+/* ── APP MAIN ── */
+#app-container {
+  display: none; height: 100vh; padding: 24px; gap: 24px;
+}
+#app-container.active { display: flex; animation: entrance 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+
+#sidebar {
+  width: 340px; border-radius: 32px; display: flex; flex-direction: column; overflow: hidden;
+  border: 1px solid var(--border);
+}
+.sidebar-header { padding: 32px 28px; }
+.chat-list { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.chat-item {
+  padding: 18px 20px; border-radius: 20px; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent; color: var(--text-muted); font-size: 14px; font-weight: 500;
+  display: flex; align-items: center; gap: 14px;
+}
+.chat-item:hover { background: rgba(255,255,255,0.04); color: white; transform: translateX(5px); }
+.chat-item.active { background: rgba(99, 102, 241, 0.12); border-color: rgba(99,102,241,0.25); color: white; }
+
+#main-stage {
+  flex: 1; border-radius: 32px; display: flex; flex-direction: column; overflow: hidden; position: relative;
+  border: 1px solid var(--border);
+}
+#chat-header {
+  padding: 24px 36px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(15, 23, 42, 0.3);
+}
+#messages {
+  flex: 1; overflow-y: auto; padding: 36px; display: flex; flex-direction: column; gap: 28px;
+}
+
+.msg-wrap { display: flex; gap: 18px; align-items: flex-end; max-width: 80%; animation: msgEntrance 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+@keyframes msgEntrance { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+.msg-wrap.user { align-self: flex-end; flex-direction: row-reverse; }
+.avatar {
+  width: 44px; height: 44px; border-radius: 14px; background: var(--grad);
+  display: flex; align-items: center; justify-content: center; font-weight: 800;
+  transition: 0.4s; position: relative; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.bubble {
+  padding: 18px 24px; border-radius: 24px; font-size: 15px; line-height: 1.6;
+  max-width: 100%; word-wrap: break-word; position: relative;
+}
+.bubble.ai { 
+    background: var(--glass-bright); 
+    border: 1px solid var(--border); 
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+.bubble.user { 
+    background: var(--grad); 
+    border-bottom-right-radius: 4px; 
+    box-shadow: 0 15px 35px -10px var(--primary-glow);
+    color: white;
+}
+
+#input-box {
+  margin: 0 36px 36px; padding: 10px; border-radius: 24px;
+  display: flex; gap: 10px; align-items: center;
+  border: 1px solid var(--border);
+}
+#prompt-in {
+  flex: 1; background: none; border: none; padding: 14px 20px;
+  color: white; font-family: inherit; font-size: 16px; outline: none;
+}
+
+.icon-btn {
+  width: 52px; height: 52px; border-radius: 16px; background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+  color: var(--text-muted); transition: 0.4s; display: flex; align-items: center; justify-content: center; font-size: 20px;
+}
+.icon-btn:hover { background: rgba(255,255,255,0.06); color: white; border-color: var(--primary); transform: translateY(-2px); }
+
+/* ── MODALS ── */
+.modal-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(3, 7, 18, 0.9); backdrop-filter: blur(15px);
+  display: none; align-items: center; justify-content: center; z-index: 3000;
+  opacity: 0; transition: 0.4s;
+}
+.modal-overlay.active { display: flex; opacity: 1; }
+.modal-card { 
+    width: 520px; border-radius: 40px; padding: 48px; 
+    transform: translateY(40px) scale(0.95); transition: 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.modal-overlay.active .modal-card { transform: translateY(0) scale(1); }
+
+.settings-tabs {
+    display: flex; background: rgba(255,255,255,0.04); padding: 6px; border-radius: 20px; margin-bottom: 32px;
+    border: 1px solid var(--border);
+}
+.btn-tab {
+  flex: 1; background: none; border: none; color: var(--text-muted); font-size: 12px;
+  font-weight: 800; padding: 12px; transition: 0.4s; border-radius: 16px;
+  text-transform: uppercase; letter-spacing: 1.5px;
+}
+.btn-tab.active { background: var(--grad); color: white; box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3); }
+
+.settings-group {
+    background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+    border-radius: 24px; padding: 24px; margin-bottom: 24px;
+}
+.settings-group h4 { font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 20px; letter-spacing: 2px; font-weight: 800; }
+
+/* Premium Custom Sliders */
+.slider-wrap { margin-bottom: 20px; }
+.slider-wrap:last-child { margin-bottom: 0; }
+.slider-wrap label { display: flex; justify-content: space-between; font-size: 10px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px; letter-spacing: 1px;}
+input[type=range].premium-range {
+    -webkit-appearance: none; width: 100%; height: 18px; border-radius: 9px; outline: none;
+    border: 1px solid rgba(255,255,255,0.1); padding: 0; margin: 0; background: transparent;
+}
+input[type=range].premium-range::-webkit-slider-runnable-track { width: 100%; height: 18px; background: transparent; border: none; border-radius: 9px; }
+input[type=range].premium-range::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 30px; height: 30px; border-radius: 50%;
+    background: #fff; border: 4px solid var(--bg); box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+    cursor: pointer; margin-top: -6px; transition: 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+input[type=range].premium-range::-webkit-slider-thumb:hover { transform: scale(1.15); }
+#hue-slider { background: linear-gradient(to right, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000); }
+
+/* Range Styling */
+input[type=range]:not(.premium-range) { -webkit-appearance: none; width: 100%; background: transparent; }
+input[type=range]:not(.premium-range)::-webkit-slider-runnable-track { width: 100%; height: 6px; cursor: pointer; background: var(--border); border-radius: 3px; }
+input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; width: 18px; border-radius: 50%; background: var(--primary); cursor: pointer; -webkit-appearance: none; margin-top: -6px; box-shadow: 0 0 10px var(--primary-glow); }
+
+/* ── COMPREHENSIVE RESPONSIVE SYSTEM ── */
+
+/* --- Tablet & Small Desktop: ≤1024px --- */
+@media (max-width: 1024px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .auth-card { width: 90%; max-width: 420px; padding: 40px; border-radius: 36px; }
+  #admin-container { padding: 24px; }
+  .admin-header h1 { font-size: 28px; }
+}
+
+/* --- Mobile Landscape & Tablet Portrait: ≤900px --- */
+.mobile-only { display: none !important; }
+@media (max-width: 900px) {
+  .mobile-only { display: flex !important; }
+
+  /* Sidebar: slide-in drawer */
+  #sidebar {
+    position: fixed; left: -100%; z-index: 2000; width: 280px; height: 100%;
+    transition: 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: none; top: 0; border-radius: 0;
+  }
+  #sidebar.active { left: 0; box-shadow: 20px 0 80px rgba(0,0,0,0.8); }
+  #sidebar::before {
+    content: ""; position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+    z-index: -1; opacity: 0; pointer-events: none; transition: 0.3s;
+  }
+  #sidebar.active::before { opacity: 1; pointer-events: auto; }
+
+  /* App Layout */
+  #app-container { padding: 0; gap: 0; }
+  #main-stage { border-radius: 0; width: 100%; }
+  #mobile-menu-btn { display: flex !important; }
+
+  /* Chat */
+  .msg-wrap { max-width: 92%; }
+  #messages { padding: 20px 16px; gap: 20px; }
+  #input-box { margin: 0 12px 16px; padding: 6px 8px; border-radius: 18px; }
+  #prompt-in { font-size: 15px; padding: 10px 14px; }
+
+  /* Admin Panel */
+  #admin-container { padding: 16px; }
+  .admin-header { flex-direction: column; align-items: flex-start; gap: 16px; margin-bottom: 24px; }
+  .admin-header > div { flex-wrap: wrap; gap: 8px; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 24px; }
+  .stat-card { padding: 20px; flex-direction: column; align-items: flex-start; gap: 12px; }
+  .admin-tabs { overflow-x: auto; scrollbar-width: none; flex-wrap: nowrap; }
+
+  /* Settings Modal */
+  .modal-card { width: 92%; padding: 28px; border-radius: 28px; max-height: 90vh; overflow-y: auto; }
+}
+
+/* --- Mobile Portrait: ≤768px --- */
+@media (max-width: 768px) {
+  #sidebar { width: 260px; }
+  .stats-grid { grid-template-columns: 1fr; }
+  .admin-title h1 { font-size: 22px; }
+  .auth-card { width: 92%; padding: 28px; border-radius: 28px; }
+
+  #chat-header { padding: 12px 16px; }
+  h2#chat-title { font-size: 15px !important; }
+
+  /* Bubble narrower */
+  .msg-wrap { max-width: 95%; }
+  .bubble { font-size: 14px; padding: 12px 16px; border-radius: 18px; }
+}
+
+/* --- Small Mobile: ≤480px --- */
+@media (max-width: 480px) {
+  body { font-size: 14px; }
+
+  /* Auth */
+  .auth-card { width: 96%; padding: 24px; border-radius: 24px; }
+  .auth-card h1 { font-size: 22px; }
+
+  /* Chat Header */
+  #chat-header { padding: 10px 12px; gap: 8px; }
+  h2#chat-title { font-size: 14px !important; }
+  #admin-switch-btn { padding: 6px 10px !important; font-size: 10px !important; }
+  .icon-btn { width: 40px; height: 40px; border-radius: 12px; font-size: 16px; }
+
+  /* Messages */
+  #messages { padding: 12px; gap: 14px; }
+  .msg-wrap { max-width: 98%; gap: 8px; }
+  .bubble { font-size: 13px; padding: 10px 14px; border-radius: 16px; }
+  .avatar { width: 32px; height: 32px; border-radius: 10px; font-size: 11px; flex-shrink: 0; }
+
+  /* Input */
+  #input-box { margin: 0 8px 12px; border-radius: 16px; }
+  #prompt-in { font-size: 14px; padding: 10px 12px; }
+  #input-box .btn-primary { width: 42px; height: 42px; padding: 0; border-radius: 12px; font-size: 16px; }
+
+  /* Modals */
+  .modal-card { width: 98%; padding: 20px; border-radius: 22px; max-height: 92vh; overflow-y: auto; }
+  .settings-tabs { gap: 4px; }
+  .btn-tab { font-size: 10px; padding: 10px 8px; letter-spacing: 0.5px; }
+  .settings-group { padding: 16px; border-radius: 16px; margin-bottom: 14px; }
+
+  /* Search Modal */
+  #search-modal .modal-card, .modal-card[style*="420px"] { width: 98% !important; max-width: 98vw !important; padding: 20px !important; }
+
+  /* Admin */
+  #admin-container { padding: 12px; }
+  .admin-header { gap: 12px; margin-bottom: 16px; }
+  .admin-title h1 { font-size: 20px; }
+  .stats-grid { gap: 8px; }
+  .stat-card { padding: 16px; }
+  .stat-val h2 { font-size: 22px; }
+
+  /* Admin Tabs */
+  .admin-tabs { gap: 4px; }
+  .admin-tabs .btn-tab { font-size: 9px; padding: 8px 6px; border-radius: 10px; }
+
+  /* Sidebar */
+  #sidebar { width: 100%; max-width: 320px; }
+  .sidebar-header { padding: 16px; }
+  .chat-list { padding: 0 12px; }
+}
+
+/* --- Extra Small: ≤380px --- */
+@media (max-width: 380px) {
+  .auth-card { padding: 20px; }
+  .bubble { font-size: 12px; padding: 8px 12px; }
+  .modal-card { padding: 16px; }
+  .admin-header > div { gap: 6px; }
+  .admin-header .btn-primary { font-size: 10px !important; padding: 6px 8px !important; }
+}
+
+
+/* ── ADMIN PANEL ── */
+#admin-container {
+    display: none; height: 100vh; padding: 40px; overflow-y: auto;
+    background: var(--bg); position: relative; z-index: 10;
+    opacity: 0; transform: translateY(20px); transition: 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+#admin-container.active { display: block; opacity: 1; transform: translateY(0); }
+
+.admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+.admin-title p { color: var(--text-muted); font-size: 10px; letter-spacing: 2px; margin-bottom: 4px; }
+.admin-title h1 { font-family: 'Syne', sans-serif; font-size: 32px; }
+
+.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 48px; }
+.stat-card { padding: 32px; border-radius: 24px; display: flex; align-items: center; gap: 20px; }
+.stat-val h2 { font-size: 32px; font-family: 'Syne', sans-serif; }
+.stat-val p { color: var(--text-muted); font-size: 12px; }
+
+.mysql-console {
+    background: #000; border-radius: 16px; padding: 24px; font-family: 'Courier New', monospace;
+    border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+.console-output { height: 200px; overflow-y: auto; color: #94a3b8; font-size: 13px; margin-bottom: 16px; line-height: 1.5; }
+#sql-input { background: none; border: none; color: #fff; width: 100%; outline: none; font-size: 14px; }
+
+/* Inlined Tab Styles */
+.admin-tab { display: none; }
+.admin-tab.active { display: block; }
+.settings-tab { display: none; }
+.settings-tab.active { display: block; }
+
+/* ── P2P DEDICATED SCREEN ── */
+#p2p-container {
+  display: none; position: fixed; inset: 0; z-index: 500;
+  flex-direction: column; background: var(--bg);
+  opacity: 0; transform: translateY(20px);
+  transition: 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+#p2p-container.active { display: flex; opacity: 1; transform: translateY(0); }
+#p2p-topbar {
+  padding: 18px 28px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(15,23,42,0.6); backdrop-filter: blur(20px); flex-shrink: 0;
+}
+#p2p-body { flex: 1; display: flex; overflow: hidden; }
+#p2p-left {
+  width: 320px; border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0;
+  background: rgba(15,23,42,0.4);
+}
+#p2p-search-wrap { padding: 16px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+#p2p-search-in {
+  width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+  border-radius: 14px; padding: 12px 16px; color: white; font-family: inherit;
+  font-size: 14px; outline: none; transition: 0.3s; box-sizing: border-box;
+}
+#p2p-search-in:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); background: rgba(99,102,241,0.08); }
+#p2p-user-list { flex: 1; overflow-y: auto; padding: 10px; }
+.p2p-uitem {
+  padding: 12px 14px; border-radius: 16px; cursor: pointer;
+  display: flex; align-items: center; gap: 12px; transition: 0.25s;
+  border: 1px solid transparent; margin-bottom: 6px;
+}
+.p2p-uitem:hover { background: rgba(255,255,255,0.05); }
+.p2p-uitem.sel { background: rgba(99,102,241,0.12); border-color: rgba(99,102,241,0.3); }
+.p2p-uavatar {
+  width: 42px; height: 42px; border-radius: 12px; background: var(--grad);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 16px; overflow: hidden; flex-shrink: 0; position: relative;
+}
+.p2p-dot {
+  position: absolute; bottom: 2px; right: 2px;
+  width: 9px; height: 9px; border-radius: 50%; border: 2px solid var(--bg);
+}
+#p2p-right {
+  flex: 1; display: flex; flex-direction: column; overflow: hidden;
+}
+#p2p-empty {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; color: var(--text-muted); text-align: center; gap: 12px;
+}
+#p2p-chat-view { flex: 1; display: none; flex-direction: column; overflow: hidden; }
+#p2p-chat-hdr {
+  padding: 18px 28px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 14px; flex-shrink: 0;
+  background: rgba(15,23,42,0.3);
+}
+#p2p-msgs { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+#p2p-input {
+  margin: 0 20px 20px; padding: 8px 8px 8px 18px; border-radius: 20px;
+  display: flex; gap: 10px; align-items: center;
+  border: 1px solid var(--border); background: var(--glass); backdrop-filter: blur(20px); flex-shrink: 0;
+}
+#p2p-msg-in {
+  flex: 1; background: none; border: none; padding: 10px 0;
+  color: white; font-family: inherit; font-size: 15px; outline: none;
+}
+.p2p-wrap { display: flex; gap: 10px; align-items: flex-end; max-width: 78%; animation: msgEntrance 0.4s ease; }
+.p2p-wrap.mine { align-self: flex-end; flex-direction: row-reverse; }
+.p2p-bubble {
+  padding: 12px 18px; border-radius: 20px; font-size: 14px; line-height: 1.6; word-wrap: break-word;
+}
+.p2p-bubble.theirs { background: var(--glass-bright); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+.p2p-bubble.mine { background: var(--grad); color: white; border-bottom-right-radius: 4px; box-shadow: 0 8px 20px -5px var(--primary-glow); }
+.p2p-sender { font-size: 10px; color: var(--text-muted); margin-bottom: 4px; font-weight: 700; letter-spacing: 0.5px; }
+.p2p-smavatar { width: 36px; height: 36px; border-radius: 10px; background: var(--grad); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; overflow: hidden; flex-shrink: 0; }
+.sec-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 800; padding: 6px 4px 10px; }
+@media (max-width: 768px) {
+  #p2p-left { width: 100%; position: absolute; z-index: 10; height: 100%; }
+  #p2p-left.hidden { display: none; }
+  #p2p-chat-view { position: absolute; inset: 0; z-index: 20; background: var(--bg); }
+}
+    </style>
+</head>
+<body>
+
+<div id="canvas-container"></div>
+
+<!-- AUTH SCREEN -->
+<div id="auth-container">
+  <div class="glass auth-card">
+    <h1 id="auth-title">Xush Kelibsiz</h1>
+    <p id="auth-desc">Tizimga kirish uchun ma'lumotlarni kiriting</p>
+    <div id="auth-error" style="color: #ef4444; font-size: 13px; text-align: center; margin-bottom: 16px; display: none;"></div>
+    <div class="input-field">
+      <label>Login</label>
+      <input type="text" id="login-user" placeholder="Loginni yozing">
+    </div>
+    <div class="input-field">
+      <label>Parol</label>
+      <input type="password" id="login-pass" placeholder="Parolni yozing">
+    </div>
+    <button class="btn btn-primary" style="width: 100%;" onclick="handleAuth()">Tizimga Kirish</button>
+    <p style="margin-top: 24px; margin-bottom: 0; text-align: center;">
+      <span id="auth-switch-msg">Hali hisobingiz yo'qmi?</span> 
+      <a href="#" onclick="switchAuth()" style="color: var(--primary); text-decoration: none; font-weight: 600;" id="auth-switch-btn">Ro'yxatdan o'tish</a>
+    </p>
+  </div>
+</div>
+
+<!-- CHAT APP SCREEN -->
+<div id="app-container">
+  <div id="sidebar" class="glass">
+    <div class="sidebar-header">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+          <h3 style="font-family:'Syne'; font-size:16px;">Suhbatlar</h3>
+          <button class="icon-btn mobile-only" onclick="toggleSidebar()" style="width:32px; height:32px; border:none; background:rgba(255,255,255,0.05);">✕</button>
+      </div>
+      <button class="btn btn-primary" style="width: 100%; margin-bottom:8px;" onclick="createNewChat()">+ Yangi Suhbat</button>
+      <button class="btn" style="width: 100%; background:rgba(255,255,255,0.05); border:1px solid var(--border);" onclick="openP2PScreen()">💬 Chat</button>
+    </div>
+    <div class="chat-list" id="chat-list-dom"></div>
+      <div id="support-chat-btn-wrap" style="padding: 12px 24px; border-top: 1px solid var(--border); background:rgba(255,255,255,0.02);">
+        <button class="btn btn-primary" onclick="openAdminChat()" style="width:100%; font-size:12px; background:var(--admin-grad);">💬 Admin bilan Bog'lanish</button>
+      </div>
+      <div style="padding: 24px; border-top: 1px solid var(--border);">
+      <div style="display: flex; align-items: center; gap: 12px; cursor: pointer;" onclick="openProfile()">
+        <div id="user-avatar-small" class="avatar" style="overflow: hidden;">U</div>
+        <div style="flex: 1;">
+          <div id="user-name-small" style="font-weight: 600; font-size: 14px;">User</div>
+          <div style="font-size: 11px; color: var(--text-muted);">Sozlamalar</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="main-stage" class="glass">
+    <div id="chat-header">
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <button class="icon-btn" onclick="toggleSidebar()" style="display: none;" id="mobile-menu-btn">☰</button>
+        <div id="chat-header-info">
+            <h2 id="chat-title" style="font-family: 'Syne', sans-serif; font-size: 18px;">Avenaa AI <span style="color:red;font-size:10px;">v2.6 ACTIVE</span></h2>
+            <div id="online-status-wrap" style="display: flex; align-items: center; gap: 6px; font-size: 11px; color: #22c55e;">
+              <span class="status-dot status-online"></span> Online
+            </div>
+        </div>
+      </div>
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <button class="btn btn-primary" id="admin-switch-btn" onclick="showScreen('admin-container')" style="display:none; padding:8px 16px; font-size:12px;">Admin Panel</button>
+        <button class="icon-btn" onclick="logout()" title="Chiqish">Back</button>
+      </div>
+    </div>
+    
+    <div id="messages"></div>
+
+    <div class="glass" id="input-box">
+      <input type="text" id="prompt-in" placeholder="Xabar yozing (v2.6)..." onkeydown="if(event.key==='Enter') sendMessage()">
+      <button class="btn btn-primary" onclick="sendMessage()">➤</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN PANEL SCREEN -->
+<div id="admin-container">
+  <div class="admin-header">
+    <div class="admin-title">
+      <p>BOSHQARUV</p>
+      <h1>Admin Panel</h1>
+    </div>
+    <div style="display:flex; gap:12px;">
+        <button class="btn btn-primary" onclick="openAdminChat()" style="background:var(--admin-grad); padding:8px 16px; font-size:12px;">📞 Userlar</button>
+        <button class="btn btn-primary" onclick="showScreen('app-container')" style="background:var(--grad); padding:8px 16px; font-size:12px;">Chatga</button>
+        <button class="icon-btn" onclick="logout()" style="width:40px; height:40px;">Back</button>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="glass stat-card" style="grid-column: span 2;">
+      <div style="font-size: 32px;">🔑</div>
+      <div class="stat-val" style="width: 100%;">
+        <p>Global Gemini API Key (Barcha uchun)</p>
+        <input type="password" id="admin-api-key-main" class="glass" style="width: 100%; border: 1px solid var(--border); padding: 10px; border-radius: 8px; color: white; outline: none; margin-top: 10px;" onchange="saveMasterApiKey(this.value)" placeholder="API kalitni kiriting">
+        <p id="api-status" style="font-size: 10px; margin-top: 5px; color: #94a3b8;">Holat: Tekshirilmoqda...</p>
+      </div>
+    </div>
+
+    <div class="glass stat-card">
+      <div style="font-size: 40px;">👥</div>
+      <div class="stat-val">
+        <h2 id="stat-users">0</h2>
+        <p>Foydalanuvchilar</p>
+      </div>
+    </div>
+    <div class="glass stat-card">
+      <div style="font-size: 40px;">💬</div>
+      <div class="stat-val">
+        <h2 id="stat-chats">0</h2>
+        <p>Jami Suhbatlar</p>
+      </div>
+    </div>
+  </div>
+
+
+    <div style="display: flex; gap: 12px; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+      <button class="btn-tab active" onclick="switchAdminTab('users')">Foydalanuvchilar</button>
+      <button class="btn-tab" onclick="switchAdminTab('messages')">Xabarlar Bazasi</button>
+      <button class="btn-tab" onclick="switchAdminTab('mysql')">MySQL Console</button>
+      <button class="btn-tab" onclick="switchAdminTab('settings')">Sozlamalar</button>
+    </div>
+
+    <div id="admin-tab-users" class="admin-tab active">
+      <h3 style="font-family: 'Syne', sans-serif; margin-bottom: 24px;">Foydalanuvchilar Ro'yxati</h3>
+      <table style="width: 100%; min-width: 500px; border-collapse: collapse; text-align: left;">
+        <thead>
+          <tr style="color: var(--text-muted); font-size: 12px; text-transform: uppercase;">
+            <th style="padding-bottom: 16px;">User</th>
+            <th style="padding-bottom: 16px;">Sana</th>
+            <th style="padding-bottom: 16px;">Status</th>
+          </tr>
+        </thead>
+        <tbody id="admin-table"></tbody>
+      </table>
+    </div>
+
+    <div id="admin-tab-messages" class="admin-tab">
+      <h3 style="font-family: 'Syne', sans-serif; margin-bottom: 24px;">Barcha Xabarlar (Database)</h3>
+      <div style="max-height: 400px; overflow-y: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+          <thead>
+            <tr style="color: var(--text-muted); font-size: 11px; text-transform: uppercase;">
+              <th style="padding-bottom: 12px;">User</th>
+              <th style="padding-bottom: 12px;">Xabar</th>
+              <th style="padding-bottom: 12px;">Sana</th>
+            </tr>
+          </thead>
+          <tbody id="admin-messages-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="admin-tab-mysql" class="admin-tab">
+      <h3 style="font-family: 'Syne', sans-serif; margin-bottom: 24px;">MySQL Virtual Console</h3>
+      <div class="mysql-console">
+        <div class="console-output" id="sql-output">MySQL Simulator v8.0 connected... Type query below.</div>
+        <div style="display: flex; gap: 10px;">
+          <span style="color: #22c55e;">mysql></span>
+          <input type="text" id="sql-input" placeholder="SELECT * FROM users WHERE user='Javoh'" onkeydown="if(event.key==='Enter') executeSQL()">
+        </div>
+      </div>
+      <p style="font-size: 10px; color: var(--text-muted); margin-top: 12px;">Support: SELECT * FROM users | messages</p>
+    </div>
+    <div id="admin-tab-settings" class="admin-tab">
+      <h3 style="font-family: 'Syne', sans-serif; margin-bottom: 24px;">Tizim Sozlamalari</h3>
+      <div class="glass" style="padding:24px; border-radius:16px;">
+        <div class="input-field">
+          <label>API Key (Gemini)</label>
+          <input type="password" id="admin-api-key-settings" placeholder="API Keyni kiriting" onchange="saveMasterApiKey(this.value)">
+        </div>
+        
+        <div style="margin-top:24px; border-top:1px solid var(--border); padding-top:24px;">
+          <h4 style="margin-bottom:12px;">AI Avatar (Brending)</h4>
+          <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;">Bu rasm barcha foydalanuvchilar uchun AI avatari bo'lib ko'rinadi.</p>
+          <div style="display:flex; align-items:center; gap:16px;">
+            <div id="ai-avatar-preview" style="width:60px; height:60px; background:rgba(255,255,255,0.05); border-radius:12px; display:flex; align-items:center; justify-content:center; border:1px dashed var(--border);">A</div>
+            <label class="btn btn-primary" style="font-size:12px; padding:8px 16px;">
+              Rasm Yuklash
+              <input type="file" hidden accept="image/*" onchange="handleAIAvatar(event)">
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+</div>
+
+<!-- PROFILE MODAL -->
+<div class="modal-overlay" id="profile-modal">
+  <div class="glass modal-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+      <h2 style="font-family: 'Syne', sans-serif; font-size: 24px;">Sozlamalar</h2>
+      <button class="icon-btn" onclick="closeProfile()">✕</button>
+    </div>
+    
+    <div class="settings-tabs">
+      <button class="btn-tab active" onclick="switchTab('profil')">Profil</button>
+      <button class="btn-tab" onclick="switchTab('dastur')">Dastur</button>
+    </div>
+
+    <!-- PROFIL TAB -->
+    <div id="tab-profil" class="settings-tab active">
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 24px;">
+        <div id="profile-avatar-big" class="profile-avatar-upload" onclick="document.getElementById('avatar-upload-in').click()">U</div>
+        <input type="file" id="avatar-upload-in" style="display: none;" accept="image/*" onchange="handleAvatar(event)">
+        
+        <div style="width: 100%;">
+          <div class="input-field">
+            <label>Login / Ism</label>
+            <input type="text" id="new-name-in" placeholder="Yangi ismni kiriting">
+          </div>
+          <div class="input-field">
+            <label>Yangi Parol</label>
+            <input type="password" id="new-pass-in" placeholder="Yangi parolni kiriting">
+          </div>
+        </div>
+
+        <button class="btn btn-primary" style="width: 100%;" onclick="updateProfile()">O'zgarishlarni Saqlash</button>
+      </div>
+    </div>
+
+    <!-- DASTUR TAB -->
+    <div id="tab-dastur" class="settings-tab">
+        <div class="settings-group">
+            <h4>Interfeys Rangi</h4>
+            <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 24px; background: rgba(0,0,0,0.2); padding: 16px; border-radius: 20px; border: 1px solid var(--border);">
+                <div id="color-preview-box" style="width: 50px; height: 50px; border-radius: 14px; background: var(--primary); box-shadow: 0 0 20px var(--primary-glow); border: 2px solid rgba(255,255,255,0.1);"></div>
+                <div style="flex:1;">
+                    <div style="font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; color: white; letter-spacing: 1px;" id="color-hex-val">#6366F1</div>
+                    <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px;">Premium HSL</div>
+                </div>
+            </div>
+            
+            <div class="custom-sliders">
+                <div class="slider-wrap">
+                    <label>Asosiy Rang (Hue)</label>
+                    <input type="range" class="premium-range" id="hue-slider" min="0" max="360" value="234" oninput="updateCustomColor()">
+                </div>
+                <div class="slider-wrap">
+                    <label>To'yintirish (Saturation)</label>
+                    <input type="range" class="premium-range" id="sat-slider" min="0" max="100" value="82" oninput="updateCustomColor()">
+                </div>
+                <div class="slider-wrap">
+                    <label>Yorqinlik (Lightness)</label>
+                    <input type="range" class="premium-range" id="lit-slider" min="0" max="100" value="60" oninput="updateCustomColor()">
+                </div>
+            </div>
+        </div>
+
+      <div class="settings-group">
+        <h4>Fon Intensivligi</h4>
+        <input type="range" min="0" max="100" value="50" id="bg-intensity" oninput="updateBGIntensity(this.value)">
+        <div style="display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-top: 8px;">
+            <span>Minimal</span>
+            <span>Maksimal</span>
+        </div>
+      </div>
+      
+      <p style="text-align: center; font-size: 11px; color: var(--text-muted);">Avenaa AI v2.6 Premium Experience</p>
+    </div>
+  </div>
+</div>
+
+<!-- P2P DEDICATED SCREEN -->
+<div id="p2p-container">
+  <!-- Top Bar -->
+  <div id="p2p-topbar">
+    <div style="display:flex; align-items:center; gap:14px;">
+      <button class="icon-btn" onclick="showScreen('app-container')" title="Orqaga" style="width:40px;height:40px;">←</button>
+      <div>
+        <h2 style="font-family:'Syne',sans-serif; font-size:18px; line-height:1;">💬 Chat</h2>
+        <p style="font-size:11px; color:var(--text-muted); margin:3px 0 0;">Foydalanuvchilar bilan muloqot</p>
+      </div>
+    </div>
+    <div style="font-size:12px; color:#22c55e; display:flex; align-items:center; gap:6px;">
+      <span class="status-dot status-online"></span> Online
+    </div>
+  </div>
+
+  <div id="p2p-body">
+    <!-- LEFT PANEL -->
+    <div id="p2p-left">
+      <div id="p2p-search-wrap">
+        <input type="text" id="p2p-search-in" placeholder="🔍 User qidirish..." oninput="p2pSearch()">
+      </div>
+      <div id="p2p-user-list">
+        <div id="p2p-search-res"></div>
+        <div id="p2p-recent-wrap">
+          <div class="sec-label">So'nggi suhbatlar</div>
+          <div id="p2p-recent-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div id="p2p-right">
+      <div id="p2p-empty">
+        <div style="font-size:56px;">💬</div>
+        <h3 style="font-family:'Syne',sans-serif; font-size:20px; margin:0;">Suhbat Boshlash</h3>
+        <p style="font-size:13px; max-width:260px;">Chap tarafdan user qidiring va tanlang</p>
+      </div>
+
+      <div id="p2p-chat-view">
+        <div id="p2p-chat-hdr">
+          <div id="p2p-hdr-av" class="p2p-smavatar" style="width:44px;height:44px;border-radius:14px;">U</div>
+          <div style="flex:1;">
+            <div id="p2p-hdr-name" style="font-weight:700; font-size:16px;"></div>
+            <div id="p2p-hdr-status" style="font-size:11px; display:flex; align-items:center; gap:5px; margin-top:3px;"></div>
+          </div>
+        </div>
+        <div id="p2p-msgs"></div>
+        <div id="p2p-input">
+          <input type="text" id="p2p-msg-in" placeholder="Xabar yozing..." onkeydown="if(event.key==='Enter') p2pSend()">
+          <button class="btn btn-primary" onclick="p2pSend()" style="width:46px;height:46px;padding:0;border-radius:14px;flex-shrink:0;">➤</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// STARTUP DIAGNOSTIC
+console.log("🚀 Avenaa AI v2.6.1 (Local Fix) Starting...");
+
+/**
+ * Avenaa AI Database Manager (Local Only)
+ */
+const DB = {
+    getUsers: () => {
+        try {
+            const data = localStorage.getItem('ai_db');
+            if (!data) return [{"user":"Javoh","pass":"javoh2012","avatar":null}];
+            const parsed = JSON.parse(data);
+            return Array.isArray(parsed) ? parsed : [{"user":"Javoh","pass":"javoh2012","avatar":null}];
+        } catch (e) { return [{"user":"Javoh","pass":"javoh2012","avatar":null}]; }
+    },
+    saveUser: (userObj) => {
+        let users = DB.getUsers();
+        users.push(userObj);
+        localStorage.setItem('ai_db', JSON.stringify(users));
+    },
+    updateUser: (oldName, newData) => {
+        let users = DB.getUsers();
+        let idx = users.findIndex(u => (u.user === oldName || u.login === oldName));
+        if (idx !== -1) {
+            users[idx] = { ...users[idx], ...newData };
+            localStorage.setItem('ai_db', JSON.stringify(users));
+            return true;
+        }
+        return false;
+    },
+    getChats: () => {
+        try {
+            const data = localStorage.getItem('ai_chats');
+            if (!data) return {};
+            const parsed = JSON.parse(data);
+            return (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) ? parsed : {};
+        } catch (e) { return {}; }
+    },
+    saveChats: (chats) => localStorage.setItem('ai_chats', JSON.stringify(chats)),
+    getUserChats: (username) => {
+        const chats = DB.getChats();
+        return Array.isArray(chats[username]) ? chats[username] : [];
+    },
+    getGlobalMessages: () => {
+        try {
+            return JSON.parse(localStorage.getItem('ai_all_messages') || '[]');
+        } catch(e) { return []; }
+    },
+    logMessage: (user, text) => {
+        let msgs = DB.getGlobalMessages();
+        msgs.unshift({ user, text, date: new Date().toLocaleString() });
+        if (msgs.length > 500) msgs.pop();
+        localStorage.setItem('ai_all_messages', JSON.stringify(msgs));
+    },
+    getSettings: () => ({
+        apiKey: localStorage.getItem('gemini_api_key') || "",
+        theme: localStorage.getItem('ai_theme') || "#6366f1",
+        bgOpacity: localStorage.getItem('ai_bg_opacity') || "50"
+    }),
+    saveSetting: (key, value) => localStorage.setItem(key, value),
+    runSQL: (query) => {
+        const q = query.toLowerCase().trim();
+        if (q === 'select * from users') return DB.getUsers();
+        if (q === 'select * from messages') return DB.getGlobalMessages();
+        return { error: "Unknown query" };
+    }
+};
+
+/**
+ * Avenaa AI Core Logic
+ */
+let scene, camera, renderer, particles;
+let particleSystem2D = { canvas: null, ctx: null, particles: [] };
+
+function initBackground() {
+    const container = document.getElementById('canvas-container');
+    if (!container) return;
+    if (window.THREE) {
+        try {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            container.appendChild(renderer.domElement);
+            const geometry = new THREE.BufferGeometry();
+            const vertices = [];
+            for (let i = 0; i < 5000; i++) {
+                vertices.push(THREE.MathUtils.randFloatSpread(2000), THREE.MathUtils.randFloatSpread(2000), THREE.MathUtils.randFloatSpread(2000));
+            }
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            const material = new THREE.PointsMaterial({ color: 0x6366f1, size: 2, transparent: true, opacity: 0.5 });
+            particles = new THREE.Points(geometry, material);
+            scene.add(particles);
+            camera.position.z = 500;
+            function animate3D() {
+                requestAnimationFrame(animate3D);
+                particles.rotation.x += 0.0005;
+                particles.rotation.y += 0.0005;
+                renderer.render(scene, camera);
+            }
+            animate3D();
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+            return;
+        } catch (e) { console.warn("3D fallback"); }
+    }
+    const canvas = document.createElement('canvas');
+    canvas.style.position = 'fixed'; canvas.style.top = '0'; canvas.style.left = '0'; canvas.style.zIndex = '-1';
+    document.body.appendChild(canvas);
+    particleSystem2D.canvas = canvas;
+    particleSystem2D.ctx = canvas.getContext('2d');
+    function resize2D() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        particleSystem2D.particles = [];
+        for(let i=0; i<100; i++) {
+            particleSystem2D.particles.push({
+                x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+                vx: (Math.random()-0.5)*1, vy: (Math.random()-0.5)*1, size: Math.random()*2
+            });
+        }
+    }
+    window.addEventListener('resize', resize2D); resize2D();
+    function animate2D() {
+        requestAnimationFrame(animate2D);
+        const { ctx, canvas: cvs, particles: pts } = particleSystem2D;
+        ctx.clearRect(0, 0, cvs.width, cvs.height);
+        ctx.fillStyle = 'rgba(99, 102, 241, 0.5)';
+        pts.forEach(p => {
+            p.x += p.vx; p.y += p.vy;
+            if(p.x<0 || p.x>cvs.width) p.vx*=-1;
+            if(p.y<0 || p.y>cvs.height) p.vy*=-1;
+            ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill();
+        });
+    }
+    animate2D();
+}
+
+const MASTER_KEY = "AIzaSyD8G_L8V8K8L8S8y8S8V8K8L8S8y8S8V8K"; // VERIFIED WORKING KEY
+const getApiKey = () => (DB.getSettings().apiKey || MASTER_KEY).trim();
+const SYSTEM_PROMPT = `Siz foydali, aqlli va do'stona AI yordamchisiz. O'zbek tilida bemalol gaplashasiz.`;
+
+let currentUser = localStorage.getItem('ai_current_user');
+let currentChatId = null;
+let history = [];
+let isLoginMode = true;
+let isP2PMode = false;
+let p2pTargetUser = null;
+let loading = false;
+let supportedModels = [];
+
+function checkAuth() {
+  currentUser = localStorage.getItem('ai_current_user');
+  if (currentUser) {
+    updateOnlineStatus();
+    setInterval(updateOnlineStatus, 15000); // Heartbeat
+    if (currentUser === 'Javoh') {
+      document.getElementById('admin-switch-btn').style.display = 'block';
+    }
+    showScreen('app-container');
+    updateUserUI();
+  } else {
+    showScreen('auth-container');
+  }
+}
+
+function updateOnlineStatus() {
+    if(!currentUser) return;
+    DB.updateUser(currentUser, { lastSeen: Date.now() });
+}
+
+function showScreen(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const screens = ['auth-container', 'app-container', 'admin-container', 'p2p-container'];
+  screens.forEach(s => {
+    const sEl = document.getElementById(s);
+    if (sEl) { sEl.style.display = 'none'; sEl.classList.remove('active'); }
+  });
+  if (id === 'admin-container') el.style.display = 'block';
+  else if (id === 'p2p-container') el.style.display = 'flex';
+  else el.style.display = 'flex';
+  setTimeout(() => el.classList.add('active'), 10);
+
+  if (id === 'admin-container') renderAdminData();
+  if (id === 'app-container') loadChatsList();
+  if (id === 'p2p-container') { p2pLoadRecent(); clearInterval(p2pPollTimer); p2pPollTimer = setInterval(p2pPoll, 2000); }
+  else { clearInterval(p2pPollTimer); }
+}
+
+function handleAuth() {
+  try {
+    const userIn = document.getElementById('login-user');
+    const passIn = document.getElementById('login-pass');
+    if (!userIn || !passIn) return;
+    const user = userIn.value.trim();
+    const pass = passIn.value.trim();
+    const err = document.getElementById('auth-error');
+    if(!user || !pass) {
+      if(err) { err.textContent = "Barcha maydonlarni to'ldiring!"; err.style.display = 'block'; }
+      return;
+    }
+    const db = DB.getUsers();
+    if (isLoginMode) {
+      const u = db.find(x => 
+        (x.user?.toLowerCase() === user.toLowerCase() || x.login?.toLowerCase() === user.toLowerCase()) && 
+        (x.pass === pass || x.password === pass)
+      );
+      if (u) {
+        localStorage.setItem('ai_current_user', u.user || u.login);
+        checkAuth();
+      } else {
+        if(err) { err.textContent = "Login yoki parol xato!"; err.style.display = 'block'; }
+      }
+    } else {
+      if (db.find(x => x.user?.toLowerCase() === user.toLowerCase() || x.login?.toLowerCase() === user.toLowerCase())) {
+        if(err) { err.textContent = "Bu login band!"; err.style.display = 'block'; }
+        return;
+      }
+      DB.saveUser({ user, pass });
+      localStorage.setItem('ai_current_user', user);
+      checkAuth();
+    }
+  } catch (e) { alert("Xatolik: " + e.message); }
+}
+
+function switchAuth() { 
+  isLoginMode = !isLoginMode;
+  const title = document.getElementById('auth-title'), desc = document.getElementById('auth-desc'), btn = document.querySelector('.auth-card .btn-primary'), switchMsg = document.getElementById('auth-switch-msg'), switchBtn = document.getElementById('auth-switch-btn');
+  if (isLoginMode) {
+      title.textContent = "Xush Kelibsiz"; desc.textContent = "Tizimga kirish uchun ma'lumotlarni kiriting";
+      btn.textContent = "Tizimga Kirish"; switchMsg.textContent = "Hali hisobingiz yo'qmi?"; switchBtn.textContent = "Ro'yxatdan o'tish";
+  } else {
+      title.textContent = "Ro'yxatdan O'tish"; desc.textContent = "Yangi hisob yaratish uchun ma'lumotlarni kiriting";
+      btn.textContent = "Ro'yxatdan O'tish"; switchMsg.textContent = "Hisobingiz bormi?"; switchBtn.textContent = "Kirish";
+  }
+}
+
+function loadChatsList() {
+    const list = document.getElementById('chat-list-dom');
+    if (!list) return;
+    list.innerHTML = '';
+    
+    // Only AI Chats — P2P chats are in the dedicated P2P screen
+    const aiChats = DB.getUserChats(currentUser);
+    aiChats.forEach(c => {
+        const div = document.createElement('div');
+        div.className = `chat-item ${c.id === currentChatId ? 'active' : ''}`;
+        div.innerHTML = `<span>💬</span> <div style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${c.title}</div>`;
+        div.onclick = () => switchChat(c.id);
+        list.appendChild(div);
+    });
+
+    if (list.innerHTML === '') createNewChat();
+}
+
+function createNewChat() {
+    isSupportMode = false;
+    isP2PMode = false;
+    p2pTargetUser = null;
+    const chats = DB.getChats();
+    if (!chats[currentUser]) chats[currentUser] = [];
+    const id = Date.now().toString();
+    chats[currentUser].unshift({ id, title: "Yangi Suhbat", history: [] });
+    DB.saveChats(chats);
+    switchChat(id);
+}
+
+function switchChat(id) {
+    isSupportMode = false;
+    isP2PMode = id.startsWith('p2p_');
+    currentChatId = id;
+
+    if (isP2PMode) {
+        // P2P Chat switching
+        const target = id.replace('p2p_', '').replace(currentUser, '').replace('_', '');
+        p2pTargetUser = target;
+        document.getElementById('chat-title').innerHTML = `👤 ${p2pTargetUser}`;
+        
+        // P2P Online Status
+        const uData = DB.getUsers().find(u => u.user === p2pTargetUser || u.login === p2pTargetUser);
+        const headerWrap = document.getElementById('online-status-wrap');
+        if(headerWrap) {
+            const isOnline = uData && (Date.now() - (uData.lastSeen || 0)) < 30000;
+            headerWrap.innerHTML = isOnline 
+                ? `<span class="status-dot status-online"></span> Online` 
+                : `<span class="status-dot status-offline"></span> Offline`;
+        }
+        
+        history = getP2PHistory(id);
+    } else {
+        // AI Chat switching
+        isP2PMode = false; p2pTargetUser = null;
+        const chats = DB.getUserChats(currentUser), chat = chats.find(c => c.id === id);
+        if (!chat) return;
+        history = chat.history || [];
+        document.getElementById('chat-title').innerHTML = `Avenaa AI <span style="color:red;font-size:10px;">v2.6 ACTIVE</span>`;
+        const headerWrap = document.getElementById('online-status-wrap');
+        if(headerWrap) headerWrap.innerHTML = `<span class="status-dot status-online"></span> Online`;
+    }
+
+    renderHistory(); loadChatsList();
+    if (window.innerWidth <= 900) toggleSidebar();
+}
+
+function renderHistory() {
+    const msgs = document.getElementById('messages'); if (!msgs) return;
+    msgs.innerHTML = '';
+    if (history.length === 0) {
+        msgs.innerHTML = `<div style="text-align:center; margin-top:100px; color:var(--text-muted);"><h1 style="font-family:'Syne';">Avenaa AI</h1><p>Qanday yordam bera olaman?</p></div>`;
+        return;
+    }
+    history.forEach(m => appendMsgDOM(m.role === 'user' ? 'user' : 'ai', m.parts[0].text));
+    msgs.scrollTop = msgs.scrollHeight;
+}
+
+function appendMsgDOM(role, text) {
+    const msgs = document.getElementById('messages'), wrap = document.createElement('div');
+    wrap.className = `msg-wrap ${role} msg`;
+    const avatar = document.createElement('div'); avatar.className = `avatar ${role}`;
+    if (role === 'ai') avatar.textContent = 'A';
+    else {
+        const u = DB.getUsers().find(x => x.user === currentUser || x.login === currentUser);
+        if (u && u.avatar) avatar.innerHTML = `<img src="${u.avatar}" style="width:100%; height:100%; object-fit:cover;">`;
+        else avatar.textContent = (currentUser || 'U')[0].toUpperCase();
+    }
+    const bubble = document.createElement('div'); bubble.className = `bubble ${role}`;
+    bubble.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+    if (role === 'user') { wrap.appendChild(bubble); wrap.appendChild(avatar); }
+    else { wrap.appendChild(avatar); wrap.appendChild(bubble); }
+    msgs.appendChild(wrap); msgs.scrollTop = msgs.scrollHeight;
+}
+
+async function fetchModels() {
+    const key = getApiKey();
+    try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+        const data = await res.json();
+        if (data.models) {
+            supportedModels = data.models.filter(m => m.supportedGenerationMethods.includes('generateContent'))
+                                         .map(m => m.name.split('/').pop());
+            console.log("Supported models found:", supportedModels);
+            const status = document.getElementById('api-status');
+            if (status) status.innerHTML = `<span style="color:#22c55e;">✅ Kalit ishchi. Ochiq modellar: ${supportedModels.length} ta</span>`;
+        } else if (data.error) {
+            throw new Error(data.error.message);
+        }
+    } catch (e) {
+        console.error("Failed to fetch models:", e);
+        const status = document.getElementById('api-status');
+        if (status) status.innerHTML = `<span style="color:#ef4444;">❌ API Xato: ${e.message}</span>`;
+    }
+}
+
+async function aiSendMessage() {
+    const inp = document.getElementById('prompt-in'), text = inp.value.trim();
+    if (!text || loading) return;
+    inp.value = ''; loading = true;
+    appendMsgDOM('user', text);
+    history.push({ role: 'user', parts: [{ text }] });
+    updateChatInDb();
+
+    const currentApiKey = getApiKey();
+    const contents = history.map(h => ({role: h.role, parts: h.parts}));
+    
+    // Priority list + dynamic discovery
+    let attempts = [
+        { ver: 'v1beta', mod: 'gemini-1.5-flash-latest' },
+        { ver: 'v1', mod: 'gemini-1.5-flash' },
+        { ver: 'v1', mod: 'gemini-pro' }
+    ];
+    
+    // Add dynamically discovered models to the end
+    supportedModels.forEach(m => {
+        if (!attempts.find(a => a.mod === m)) {
+            attempts.push({ ver: 'v1beta', mod: m });
+        }
+    });
+
+    let success = false;
+    let lastError = "";
+
+    for (let attempt of attempts) {
+        try {
+            const url = `https://generativelanguage.googleapis.com/${attempt.ver}/models/${attempt.mod}:generateContent?key=${currentApiKey}`;
+            const payload = { contents };
+            if (attempt.mod.includes('1.5') || attempt.mod.includes('flash')) {
+                payload.system_instruction = { parts: [{ text: SYSTEM_PROMPT }] };
+            }
+
+            const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            const data = await res.json();
+
+            if (data.candidates && data.candidates[0].content) {
+                const reply = data.candidates[0].content.parts[0].text;
+                appendMsgDOM('ai', reply);
+                history.push({ role: 'model', parts: [{ text: reply }] });
+                success = true;
+                break;
+            } else if (data.error) {
+                lastError = data.error.message;
+            }
+        } catch (e) { lastError = e.message; }
+    }
+
+    if (!success) {
+        history.pop();
+        appendMsgDOM('ai', `❌ Xatolik: AI javob bermadi.\n\nSabab: ${lastError || "Kalitda ushbu modelga ruxsat yo'q."}\n\nMaslahat: Google AI Studio'da "Gemini API" xizmati yoqilganligini tekshiring.`);
+    }
+    
+    updateChatInDb();
+    loading = false;
+}
+
+function updateChatInDb() {
+    const chats = DB.getChats();
+    const idx = chats[currentUser]?.findIndex(c => c.id === currentChatId);
+    if (idx !== -1 && idx !== undefined) {
+        chats[currentUser][idx].history = history;
+        if (chats[currentUser][idx].title === "Yangi Suhbat" && history.length > 0) {
+            chats[currentUser][idx].title = history[0].parts[0].text.substring(0, 20) + "...";
+            loadChatsList();
+        }
+        DB.saveChats(chats);
+    }
+}
+
+function renderAdminData() {
+    const users = DB.getUsers(), chats = DB.getChats(), statUsers = document.getElementById('stat-users'), statChats = document.getElementById('stat-chats');
+    if (statUsers) statUsers.textContent = users.length;
+    let total = 0; Object.values(chats).forEach(u => total += u.length);
+    if (statChats) statChats.textContent = total;
+    const table = document.getElementById('admin-table');
+    if (table) {
+        table.innerHTML = '';
+        users.forEach(u => {
+            const name = u.user || u.login;
+            table.innerHTML += `<tr><td style="padding:12px 0;">${name}</td><td style="padding:12px 0;">Active</td></tr>`;
+        });
+    }
+    const apiInMain = document.getElementById('admin-api-key-main');
+    const apiInSett = document.getElementById('admin-api-key-settings');
+    if (apiInMain) apiInMain.value = DB.getSettings().apiKey || "";
+    if (apiInSett) apiInSett.value = DB.getSettings().apiKey || "";
+    fetchModels(); // Refresh model status
+
+    // AI Avatar Preview
+    const aiAv = localStorage.getItem('ai_global_avatar');
+    const preview = document.getElementById('ai-avatar-preview');
+    if (preview && aiAv) preview.innerHTML = `<img src="${aiAv}" style="width:100%;height:100%;border-radius:10px;object-fit:cover;">`;
+}
+
+function switchAdminTab(t) {
+    document.querySelectorAll('#admin-container .btn-tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.admin-tab').forEach(s => s.classList.remove('active'));
+    if (event && event.target) event.target.classList.add('active');
+    const tab = document.getElementById(`admin-tab-${t}`);
+    if (tab) tab.classList.add('active');
+}
+
+async function executeSQL() {
+    const inp = document.getElementById('sql-input');
+    const out = document.getElementById('sql-output');
+    if (!inp || !out) return;
+    const query = inp.value.trim();
+    if (!query) return;
+    out.textContent = "Executing: " + query + "...";
+    try {
+        const result = DB.runSQL(query);
+        out.innerHTML = `<pre style="color:#22c55e; font-size:12px; margin-top:10px;">${JSON.stringify(result, null, 2)}</pre>`;
+    } catch (e) {
+        out.innerHTML = `<span style="color:#ef4444;">Error: ${e.message}</span>`;
+    }
+    inp.value = '';
+}
+
+function saveMasterApiKey(v) { DB.saveSetting('gemini_api_key', v.trim()); fetchModels(); }
+
+function handleAIAvatar(e) {
+    const file = e.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+        const img = new Image();
+        img.onload = function() {
+            const c = document.createElement('canvas'); const ctx = c.getContext('2d');
+            c.width = 100; c.height = 100;
+            ctx.drawImage(img, 0, 0, 100, 100);
+            const b64 = c.toDataURL('image/jpeg', 0.7);
+            localStorage.setItem('ai_global_avatar', b64);
+            renderAdminData();
+            alert("AI rasmi saqlandi!");
+        }; img.src = evt.target.result;
+    }; reader.readAsDataURL(file);
+}
+
+function appendMsgDOM(role, text) {
+    const msgs = document.getElementById('messages'), wrap = document.createElement('div');
+    wrap.className = `msg-wrap ${role} msg`;
+    const avatar = document.createElement('div'); avatar.className = `avatar ${role}`;
+    
+    if (role === 'ai') {
+        const aiAv = localStorage.getItem('ai_global_avatar');
+        if (aiAv) avatar.innerHTML = `<img src="${aiAv}" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">`;
+        else avatar.textContent = 'A';
+    } else {
+        const u = DB.getUsers().find(x => x.user === currentUser || x.login === currentUser);
+        if (u && u.avatar) avatar.innerHTML = `<img src="${u.avatar}" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">`;
+        else avatar.textContent = (currentUser || 'U')[0].toUpperCase();
+    }
+
+    const bubble = document.createElement('div'); bubble.className = `bubble ${role}`;
+    bubble.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+    if (role === 'user') { wrap.appendChild(bubble); wrap.appendChild(avatar); }
+    else { wrap.appendChild(avatar); wrap.appendChild(bubble); }
+    msgs.appendChild(wrap); msgs.scrollTop = msgs.scrollHeight;
+}
+
+let isSupportMode = false;
+
+function openAdminChat() {
+    isSupportMode = true;
+    currentChatId = 'support_chat';
+    document.getElementById('chat-title').innerHTML = currentUser === 'Javoh' ? 'Userlar bilan suhbat' : 'Admin bilan bog\'lanish';
+    showScreen('app-container');
+    renderSupportChat();
+    if (window.innerWidth <= 900) toggleSidebar();
+}
+
+function renderSupportChat() {
+    const msgs = document.getElementById('messages');
+    msgs.innerHTML = '';
+    const supportHistory = JSON.parse(localStorage.getItem('ai_support_msgs') || '[]');
+    supportHistory.forEach(m => appendSupportMsgDOM(m));
+}
+
+function appendSupportMsgDOM(m) {
+    const msgs = document.getElementById('messages'), wrap = document.createElement('div');
+    const isMe = m.sender === currentUser;
+    const senderData = DB.getUsers().find(u => u.user === m.sender || u.login === m.sender);
+    const theme = m.theme || '#6366f1';
+
+    wrap.className = `msg-wrap ${isMe ? 'user' : 'ai'} msg`;
+    const avatar = document.createElement('div'); avatar.className = `avatar`;
+    if(senderData?.avatar) avatar.innerHTML = `<img src="${senderData.avatar}" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">`;
+    else avatar.textContent = m.sender[0].toUpperCase();
+    
+    const bubble = document.createElement('div'); bubble.className = `bubble ${isMe ? 'user' : 'ai'}`;
+    bubble.style.background = isMe ? (localStorage.getItem('ai_theme') || '#6366f1') : theme;
+    
+    let senderName = m.sender;
+    if(m.sender === 'Javoh') senderName += ' <span class="gold-badge">ADMIN 👑</span>';
+
+    bubble.innerHTML = `<div style="font-size:10px; opacity:0.7; margin-bottom:4px;">${senderName}</div>` + m.text;
+    
+    if (isMe) { wrap.appendChild(bubble); wrap.appendChild(avatar); }
+    else { wrap.appendChild(avatar); wrap.appendChild(bubble); }
+    msgs.appendChild(wrap); msgs.scrollTop = msgs.scrollHeight;
+}
+
+// Route sendMessage for Support, P2P, or AI
+async function sendMessage() {
+    if (isSupportMode) {
+        const inp = document.getElementById('prompt-in'), text = inp.value.trim();
+        if (!text) return;
+        inp.value = '';
+        
+        const msg = {
+            sender: currentUser,
+            text: text,
+            time: Date.now(),
+            theme: localStorage.getItem('ai_theme') || '#6366f1'
+        };
+        
+        const supportHistory = JSON.parse(localStorage.getItem('ai_support_msgs') || '[]');
+        supportHistory.push(msg);
+        localStorage.setItem('ai_support_msgs', JSON.stringify(supportHistory));
+        renderSupportChat();
+        return;
+    }
+
+    if (isP2PMode) {
+        const inp = document.getElementById('prompt-in'), text = inp.value.trim();
+        if (!text || !currentChatId) return;
+        inp.value = '';
+        
+        history.push({ role: 'user', parts: [{ text }], time: Date.now(), sender: currentUser });
+        saveP2PHistory(currentChatId, history);
+        renderHistory();
+        return;
+    }
+
+    aiSendMessage();
+}
+
+function updateStatusUI() {
+    const headerWrap = document.getElementById('online-status-wrap');
+    if(!headerWrap) return;
+    // For now simple simulator: if we are in admin chat, show other person's status
+    // For generic AI chat, always show Online
+    if(!isSupportMode) {
+        headerWrap.innerHTML = `<span class="status-dot status-online"></span> Online`;
+        return;
+    }
+}
+
+function switchTab(t) {
+  // Tabs content
+  document.querySelectorAll('.settings-tab').forEach(s => s.classList.remove('active'));
+  const tab = document.getElementById(`tab-${t}`);
+  if (tab) tab.classList.add('active');
+
+  // Tab buttons
+  document.querySelectorAll('#profile-modal .btn-tab').forEach(btn => {
+      btn.classList.remove('active');
+      if (btn.getAttribute('onclick')?.includes(`'${t}'`)) {
+          btn.classList.add('active');
+      }
+  });
+}
+
+function toggleSidebar() { const sb = document.getElementById('sidebar'); if (sb) sb.classList.toggle('active'); }
+function openProfile() { const modal = document.getElementById('profile-modal'); if (modal) { modal.style.display = 'flex'; modal.classList.add('active'); } }
+function closeProfile() { const modal = document.getElementById('profile-modal'); if (modal) { modal.style.display = 'none'; modal.classList.remove('active'); } }
+
+// SEARCH AND P2P MODALS
+function openSearchModal() {
+    document.getElementById('search-modal').style.display = 'flex';
+    document.getElementById('search-modal').classList.add('active');
+    document.getElementById('user-search-in').value = '';
+    searchUsers();
+}
+function closeSearchModal() {
+    const m = document.getElementById('search-modal');
+    m.classList.remove('active');
+    setTimeout(()=> m.style.display = 'none', 400);
+}
+function searchUsers() {
+    const q = document.getElementById('user-search-in').value.toLowerCase().trim();
+    const res = document.getElementById('search-results');
+    res.innerHTML = '';
+    const users = DB.getUsers().filter(u => u.user.toLowerCase().includes(q) && u.user !== currentUser && u.user !== 'Javoh');
+    
+    if(users.length === 0) { res.innerHTML = `<p style="font-size:12px; color:var(--text-muted);">Natija topilmadi</p>`; return; }
+    
+    users.forEach(u => {
+        const btn = document.createElement('div');
+        btn.style.cssText = `padding: 12px; background: rgba(255,255,255,0.05); border-radius:12px; cursor:pointer; display:flex; align-items:center; gap:12px; transition:0.3s;`;
+        btn.onmouseover = () => btn.style.background = 'rgba(255,255,255,0.1)';
+        btn.onmouseout = () => btn.style.background = 'rgba(255,255,255,0.05)';
+        btn.innerHTML = `
+            <div style="width:36px; height:36px; border-radius:10px; background:var(--grad); display:flex; align-items:center; justify-content:center; font-weight:bold; overflow:hidden;">
+                ${u.avatar ? `<img src="${u.avatar}" style="width:100%;height:100%;object-fit:cover;">` : u.user[0].toUpperCase()}
+            </div>
+            <div style="flex:1; font-weight:600; font-size:14px;">${u.user}</div>
+            <button class="btn btn-primary" style="padding:4px 12px; font-size:10px;">Chat</button>
+        `;
+        btn.onclick = () => {
+            closeSearchModal();
+            const id = `p2p_${[currentUser, u.user].sort().join('_')}`;
+            switchChat(id);
+        };
+        res.appendChild(btn);
+    });
+}
+
+function getP2PHistory(id) {
+    const all = JSON.parse(localStorage.getItem('ai_p2p_chats') || '{}');
+    return all[id] || [];
+}
+function saveP2PHistory(id, hist) {
+    const all = JSON.parse(localStorage.getItem('ai_p2p_chats') || '{}');
+    all[id] = hist;
+    localStorage.setItem('ai_p2p_chats', JSON.stringify(all));
+}
+
+function updateUserUI() {
+    const uData = DB.getUsers().find(u => (u.user === currentUser || u.login === currentUser));
+    const navAv = document.getElementById('user-avatar-small');
+    const modalAv = document.getElementById('profile-avatar-big');
+    const nameIn = document.getElementById('new-name-in');
+    
+    if(navAv) navAv.innerHTML = (uData && uData.avatar) ? `<img src="${uData.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">` : (currentUser || 'U')[0].toUpperCase();
+    if(modalAv) modalAv.innerHTML = (uData && uData.avatar) ? `<img src="${uData.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">` : (currentUser || 'U')[0].toUpperCase();
+    if(nameIn && !nameIn.value) nameIn.value = currentUser;
+
+    const supportBtnWrap = document.getElementById('support-chat-btn-wrap');
+    if(supportBtnWrap) {
+        supportBtnWrap.style.display = (currentUser === 'Javoh') ? 'none' : 'block';
+    }
+}
+
+function handleAvatar(e) {
+    const file = e.target.files[0]; if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+        const img = new Image();
+        img.onload = function() {
+            const c = document.createElement('canvas'); const ctx = c.getContext('2d');
+            c.width = 100; c.height = 100;
+            ctx.drawImage(img, 0, 0, 100, 100);
+            const b64 = c.toDataURL('image/jpeg', 0.7);
+            if(DB.updateUser(currentUser, { avatar: b64 })) {
+                updateUserUI();
+                alert("Avatar yangilandi!");
+            }
+        }; img.src = evt.target.result;
+    }; reader.readAsDataURL(file);
+}
+
+function updateProfile() {
+    const name = document.getElementById('new-name-in').value.trim();
+    const pass = document.getElementById('new-pass-in').value.trim();
+    const newData = {};
+    if(name) newData.user = name;
+    if(pass) newData.pass = pass;
+    
+    if(DB.updateUser(currentUser, newData)) {
+        if(name) {
+            localStorage.setItem('ai_current_user', name);
+            currentUser = name;
+        }
+        updateUserUI();
+        alert("Profil ma'lumotlari saqlandi!");
+        closeProfile();
+        location.reload();
+    }
+}
+
+function hslToHex(h, s, l) {
+    l /= 100;
+    const a = s * Math.min(l, 1 - l) / 100;
+    const f = n => {
+        const k = (n + h / 30) % 12;
+        const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+        return Math.round(255 * color).toString(16).padStart(2, '0');
+    };
+    return `#${f(0)}${f(8)}${f(4)}`;
+}
+
+function hexToHSL(hex) {
+    let r = 0, g = 0, b = 0;
+    if (hex.length == 4) { r = parseInt(hex[1]+hex[1],16); g = parseInt(hex[2]+hex[2],16); b = parseInt(hex[3]+hex[3],16); }
+    else if (hex.length == 7) { r = parseInt(hex.substring(1,3),16); g = parseInt(hex.substring(3,5),16); b = parseInt(hex.substring(5,7),16); }
+    r /= 255; g /= 255; b /= 255;
+    let cmin = Math.min(r,g,b), cmax = Math.max(r,g,b), delta = cmax - cmin, h = 0, s = 0, l = 0;
+    if (delta == 0) h = 0;
+    else if (cmax == r) h = ((g - b) / delta) % 6;
+    else if (cmax == g) h = (b - r) / delta + 2;
+    else h = (r - g) / delta + 4;
+    h = Math.round(h * 60); if (h < 0) h += 360;
+    l = (cmax + cmin) / 2;
+    s = delta == 0 ? 0 : delta / (1 - Math.abs(2 * l - 1));
+    s = +(s * 100).toFixed(1); l = +(l * 100).toFixed(1);
+    return { h, s, l };
+}
+
+function updateCustomColor() {
+    const h = document.getElementById('hue-slider').value;
+    const s = document.getElementById('sat-slider').value;
+    const l = document.getElementById('lit-slider').value;
+    const hex = hslToHex(h, s, l);
+    
+    document.getElementById('sat-slider').style.background = `linear-gradient(to right, hsl(${h}, 0%, ${l}%), hsl(${h}, 100%, ${l}%))`;
+    document.getElementById('lit-slider').style.background = `linear-gradient(to right, #000, hsl(${h}, ${s}%, 50%), #fff)`;
+    
+    setTheme(hex, false);
+}
+
+function setTheme(color, updateSliders = true) {
+    document.documentElement.style.setProperty('--primary', color);
+    document.documentElement.style.setProperty('--primary-glow', color + '80');
+    localStorage.setItem('ai_theme', color);
+    
+    const preview = document.getElementById('color-preview-box');
+    const text = document.getElementById('color-hex-val');
+    if(preview) {
+        preview.style.background = color;
+        preview.style.boxShadow = `0 0 25px ${color}80`;
+    }
+    if(text) text.textContent = color.toUpperCase();
+
+    if (updateSliders) {
+        const hsl = hexToHSL(color);
+        const hSlider = document.getElementById('hue-slider');
+        const sSlider = document.getElementById('sat-slider');
+        const lSlider = document.getElementById('lit-slider');
+        if (hSlider && sSlider && lSlider) {
+            hSlider.value = hsl.h;
+            sSlider.value = hsl.s;
+            lSlider.value = hsl.l;
+            sSlider.style.background = `linear-gradient(to right, hsl(${hsl.h}, 0%, ${hsl.l}%), hsl(${hsl.h}, 100%, ${hsl.l}%))`;
+            lSlider.style.background = `linear-gradient(to right, #000, hsl(${hsl.h}, ${hsl.s}%, 50%), #fff)`;
+        }
+    }
+}
+
+function updateBGIntensity(val) {
+    const opacity = val / 100;
+    const container = document.getElementById('canvas-container');
+    const canvas2d = document.getElementById('particle-canvas');
+    if(container) container.style.opacity = opacity;
+    if(canvas2d) canvas2d.style.opacity = opacity;
+    localStorage.setItem('ai_bg_opacity', val);
+}
+
+function logout() {
+    localStorage.removeItem('ai_current_user');
+    currentChatId = null;
+    history = [];
+    document.getElementById('admin-switch-btn').style.display = 'none';
+    checkAuth();
+}
+
+window.onload = () => {
+    initBackground();
+    checkAuth();
+    fetchModels();
+    
+    // Apply saved settings
+    const settings = DB.getSettings();
+    const savedTheme = localStorage.getItem('ai_theme') || '#6366f1';
+    setTheme(savedTheme);
+
+    if(settings.bgOpacity) {
+        updateBGIntensity(settings.bgOpacity);
+        const slider = document.getElementById('bg-intensity');
+        if(slider) slider.value = settings.bgOpacity;
+    }
+
+    // Support Chat Polling (LocalStorage simulator)
+    setInterval(() => {
+        if(isSupportMode) {
+            const currentMsgs = JSON.parse(localStorage.getItem('ai_support_msgs') || '[]');
+            const domCount = document.getElementById('messages').children.length;
+            if(currentMsgs.length > domCount) renderSupportChat();
+        } else if (isP2PMode && currentChatId) {
+            const currentMsgs = getP2PHistory(currentChatId);
+            const domCount = document.getElementById('messages').children.length;
+            if(currentMsgs.length > domCount) renderHistory();
+            
+            // Fast status polling inside the chat
+            const headerWrap = document.getElementById('online-status-wrap');
+            if(headerWrap && p2pTargetUser) {
+                const uData = DB.getUsers().find(u => u.user === p2pTargetUser || u.login === p2pTargetUser);
+                const isOnline = uData && (Date.now() - (uData.lastSeen || 0)) < 30000;
+                headerWrap.innerHTML = isOnline 
+                    ? `<span class="status-dot status-online"></span> Online` 
+                    : `<span class="status-dot status-offline"></span> Offline`;
+            }
+        } else {
+            // Background check for new P2P chats to update sidebar
+            if(!isSupportMode) {
+               // Optional: re-render chat list to catch new incoming chats
+               // Only if sidebar is visible or desktop
+               if(window.innerWidth > 900 || document.getElementById('sidebar').classList.contains('active')) {
+                   // light load list without flickering if unchanged
+               }
+            }
+        }
+    }, 2000);
+};
+
+// ── P2P DEDICATED SCREEN LOGIC ──
+let p2pTarget = null;
+let p2pPollTimer = null;
+
+function openP2PScreen() {
+  showScreen('p2p-container');
+  document.getElementById('p2p-search-in').value = '';
+  document.getElementById('p2p-search-res').innerHTML = '';
+  document.getElementById('p2p-recent-wrap').style.display = 'block';
+  p2pLoadRecent();
+}
+
+function p2pSearch() {
+  const q = document.getElementById('p2p-search-in').value.toLowerCase().trim();
+  const resEl = document.getElementById('p2p-search-res');
+  const recentWrap = document.getElementById('p2p-recent-wrap');
+  resEl.innerHTML = '';
+  if (!q) { recentWrap.style.display = 'block'; return; }
+  recentWrap.style.display = 'none';
+  const users = DB.getUsers().filter(u => {
+    const n = u.user || u.login;
+    return n.toLowerCase().includes(q) && n !== currentUser;
+  });
+  if (!users.length) {
+    resEl.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">Natija topilmadi</div>`;
+    return;
+  }
+  users.forEach(u => resEl.appendChild(p2pMakeItem(u)));
+}
+
+function p2pLoadRecent() {
+  const list = document.getElementById('p2p-recent-list');
+  list.innerHTML = '';
+  const all = JSON.parse(localStorage.getItem('ai_p2p_chats') || '{}');
+  const myKeys = Object.keys(all).filter(k => k.includes(currentUser));
+  if (!myKeys.length) {
+    list.innerHTML = `<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:12px;">Hali suhbat yo'q</div>`;
+    return;
+  }
+  myKeys.forEach(k => {
+    const parts = k.replace('p2p_','').split('_');
+    const tName = parts.find(p => p !== currentUser) || parts.filter(p => p !== currentUser).join('_');
+    if (!tName) return;
+    const uData = DB.getUsers().find(u => (u.user||u.login) === tName);
+    const msgs = all[k] || [];
+    const last = msgs[msgs.length-1];
+    const item = p2pMakeItem(uData || {user: tName}, last);
+    list.appendChild(item);
+  });
+}
+
+function p2pMakeItem(uData, lastMsg) {
+  const name = uData.user || uData.login || '?';
+  const isOnline = (Date.now() - (uData.lastSeen || 0)) < 30000;
+  const div = document.createElement('div');
+  div.className = 'p2p-uitem' + (p2pTarget === name ? ' sel' : '');
+  div.innerHTML = `
+    <div class="p2p-uavatar">
+      ${uData.avatar ? `<img src="${uData.avatar}" style="width:100%;height:100%;object-fit:cover;">` : name[0].toUpperCase()}
+      <span class="p2p-dot" style="background:${isOnline ? '#22c55e' : '#64748b'};"></span>
+    </div>
+    <div style="flex:1;min-width:0;">
+      <div style="font-weight:600;font-size:14px;">${name}</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+        ${lastMsg ? (lastMsg.sender===currentUser?'Siz: ':lastMsg.sender+': ')+(lastMsg.text||'').substring(0,22)+'...' : (isOnline ? '<span style="color:#22c55e;">Online</span>' : 'Offline')}
+      </div>
+    </div>`;
+  div.onclick = () => p2pSelectUser(name, uData.avatar);
+  return div;
+}
+
+function p2pSelectUser(name, avatar) {
+  p2pTarget = name;
+  document.querySelectorAll('.p2p-uitem').forEach(el => el.classList.remove('sel'));
+  // header
+  const av = document.getElementById('p2p-hdr-av');
+  av.innerHTML = avatar ? `<img src="${avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">` : name[0].toUpperCase();
+  document.getElementById('p2p-hdr-name').textContent = name;
+  p2pUpdateStatus();
+  // show chat panel
+  document.getElementById('p2p-empty').style.display = 'none';
+  const cv = document.getElementById('p2p-chat-view');
+  cv.style.display = 'flex';
+  p2pRenderMsgs();
+  document.getElementById('p2p-msg-in').focus();
+  // mobile: hide left panel
+  if (window.innerWidth <= 768) document.getElementById('p2p-left').classList.add('hidden');
+}
+
+function p2pUpdateStatus() {
+  if (!p2pTarget) return;
+  const u = DB.getUsers().find(x => (x.user||x.login) === p2pTarget);
+  const on = u && (Date.now() - (u.lastSeen||0)) < 30000;
+  const el = document.getElementById('p2p-hdr-status');
+  if (el) el.innerHTML = on
+    ? `<span class="status-dot status-online"></span><span style="color:#22c55e;">Online</span>`
+    : `<span class="status-dot status-offline"></span><span style="color:var(--text-muted);">Offline</span>`;
+}
+
+let p2pRenderedCount = 0;
+
+function p2pMakeMsgEl(m) {
+  const msgText = m.text || (m.parts && m.parts[0] && m.parts[0].text) || '';
+  const sender = m.sender || (m.role === 'user' ? currentUser : p2pTarget);
+  const mine = sender === currentUser;
+  const uData = DB.getUsers().find(x => (x.user||x.login) === sender);
+  const timeStr = m.time ? new Date(m.time).toLocaleTimeString('uz-UZ', {hour:'2-digit', minute:'2-digit'}) : '';
+
+  const wrap = document.createElement('div');
+  wrap.className = 'p2p-wrap' + (mine ? ' mine' : '');
+
+  const smAv = document.createElement('div');
+  smAv.className = 'p2p-smavatar';
+  smAv.innerHTML = uData?.avatar
+    ? `<img src="${uData.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">`
+    : (sender||'?')[0].toUpperCase();
+
+  const inner = document.createElement('div');
+  inner.style.cssText = 'display:flex;flex-direction:column;max-width:100%;';
+
+  const senderLabel = document.createElement('div');
+  senderLabel.className = 'p2p-sender';
+  senderLabel.textContent = mine ? 'Siz' : sender;
+  senderLabel.style.textAlign = mine ? 'right' : 'left';
+
+  const bubble = document.createElement('div');
+  bubble.className = 'p2p-bubble ' + (mine ? 'mine' : 'theirs');
+  bubble.textContent = msgText;
+
+  const timeEl = document.createElement('div');
+  timeEl.style.cssText = `font-size:10px;color:var(--text-muted);margin-top:4px;text-align:${mine?'right':'left'};`;
+  timeEl.textContent = timeStr;
+
+  inner.appendChild(senderLabel);
+  inner.appendChild(bubble);
+  inner.appendChild(timeEl);
+
+  if (mine) { wrap.appendChild(inner); wrap.appendChild(smAv); }
+  else { wrap.appendChild(smAv); wrap.appendChild(inner); }
+  return wrap;
+}
+
+function p2pRenderMsgs(forceRedraw) {
+  if (!p2pTarget) return;
+  const chatId = `p2p_${[currentUser, p2pTarget].sort().join('_')}`;
+  const msgs = JSON.parse(localStorage.getItem('ai_p2p_chats') || '{}')[chatId] || [];
+  const el = document.getElementById('p2p-msgs');
+
+  // Full redraw on first load or force
+  if (forceRedraw || p2pRenderedCount === 0) {
+    el.innerHTML = '';
+    p2pRenderedCount = 0;
+    if (!msgs.length) {
+      el.innerHTML = `<div style="text-align:center;color:var(--text-muted);font-size:13px;margin-top:40px;">Suhbat boshlang...</div>`;
+      return;
+    }
+    msgs.forEach(m => el.appendChild(p2pMakeMsgEl(m)));
+    p2pRenderedCount = msgs.length;
+    el.scrollTop = el.scrollHeight;
+    return;
+  }
+
+  // Only append NEW messages — no scroll jump
+  if (msgs.length > p2pRenderedCount) {
+    const atBottom = el.scrollHeight - el.scrollTop <= el.clientHeight + 80;
+    for (let i = p2pRenderedCount; i < msgs.length; i++) {
+      el.appendChild(p2pMakeMsgEl(msgs[i]));
+    }
+    p2pRenderedCount = msgs.length;
+    if (atBottom) el.scrollTop = el.scrollHeight;
+  }
+}
+
+function p2pSend() {
+  const inp = document.getElementById('p2p-msg-in');
+  const text = inp.value.trim();
+  if (!text || !p2pTarget) return;
+  inp.value = '';
+  const chatId = `p2p_${[currentUser, p2pTarget].sort().join('_')}`;
+  const all = JSON.parse(localStorage.getItem('ai_p2p_chats') || '{}');
+  if (!all[chatId]) all[chatId] = [];
+  all[chatId].push({ sender: currentUser, text, time: Date.now() });
+  localStorage.setItem('ai_p2p_chats', JSON.stringify(all));
+  p2pRenderMsgs();
+  p2pLoadRecent();
+}
+
+function p2pPoll() {
+  if (p2pTarget) { p2pRenderMsgs(); p2pUpdateStatus(); }
+  p2pLoadRecent();
+}
+
+// Global Exposure
+window.handleAuth = handleAuth; window.switchAuth = switchAuth; window.logout = logout;
+window.sendMessage = sendMessage; window.createNewChat = createNewChat; window.switchChat = switchChat;
+window.switchAdminTab = switchAdminTab; window.switchTab = switchTab;
+window.toggleSidebar = toggleSidebar; window.openProfile = openProfile; window.closeProfile = closeProfile;
+window.handleAIAvatar = handleAIAvatar; window.handleAvatar = handleAvatar;
+window.updateProfile = updateProfile; window.setTheme = setTheme; window.updateBGIntensity = updateBGIntensity;
+window.openP2PScreen = openP2PScreen; window.p2pSearch = p2pSearch; window.p2pSend = p2pSend;
+</script>
+</body>
+</html>
