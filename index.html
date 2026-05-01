@@ -153,9 +153,11 @@ body {
 }
 
 #input-box {
-  margin: 0 36px 36px; padding: 10px; border-radius: 24px;
-  display: flex; gap: 10px; align-items: center; flex-shrink: 0;
+  margin: 0 36px 36px; padding: 12px; border-radius: 24px;
+  display: flex; gap: 10px; align-items: center; 
+  flex-shrink: 0; /* Mobil qurilmalarda siqilib qolmasligi uchun */
   border: 1px solid var(--border);
+  background: var(--glass-bright);
 }
 #prompt-in {
   flex: 1; background: none; border: none; padding: 14px 20px;
@@ -250,14 +252,14 @@ input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; widt
   #sidebar.active::before { opacity: 1; pointer-events: auto; }
 
   /* App Layout */
-  #app-container { padding: 0; gap: 0; height: 100dvh; }
+  #app-container { padding: 0; gap: 0; height: 100dvh; flex-direction: column; }
   #main-stage { border-radius: 0; width: 100%; }
   #mobile-menu-btn { display: flex !important; }
 
   /* Chat */
   .msg-wrap { max-width: 92%; }
   #messages { padding: 20px 16px; gap: 20px; }
-  #input-box { margin: 8px 12px 12px; padding: 6px 8px; border-radius: 18px; position: sticky; bottom: 0; }
+  #input-box { margin: 8px 12px env(safe-area-inset-bottom, 12px); padding: 8px; border-radius: 18px; position: relative; bottom: 0; flex-shrink: 0; }
   #prompt-in { font-size: 15px; padding: 10px 14px; }
 
   /* Admin Panel */
@@ -803,6 +805,15 @@ const DB = {
                 localStorage.setItem('ai_db', JSON.stringify(users));
                 console.log("✅ Bazaga ulandi");
             }
+            
+            const sRes = await fetch('/api/settings');
+            if (sRes.ok) {
+                const settings = await sRes.json();
+                Object.keys(settings).forEach(key => {
+                    localStorage.setItem(key, settings[key]);
+                });
+                console.log("✅ Global sozlamalar yuklandi");
+            }
         } catch (e) { console.warn("Server ulanishida xato"); }
     },
     saveToServer: async () => {
@@ -810,6 +821,18 @@ const DB = {
             const users = DB.getUsers();
             await fetch('/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(users) });
         } catch (e) {}
+    },
+    saveSettingsToServer: async () => {
+        try {
+            const settings = {
+                gemini_api_key: localStorage.getItem('gemini_api_key'),
+                ai_theme: localStorage.getItem('ai_theme'),
+                ai_bg_opacity: localStorage.getItem('ai_bg_opacity'),
+                ai_global_avatar: localStorage.getItem('ai_global_avatar')
+            };
+            await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(settings) });
+            console.log("✅ Sozlamalar serverga saqlandi");
+        } catch (e) { console.error("Serverga saqlashda xato!"); }
     },
     getUsers: () => {
         try {
@@ -865,7 +888,7 @@ const DB = {
         theme: localStorage.getItem('ai_theme') || "#6366f1",
         bgOpacity: localStorage.getItem('ai_bg_opacity') || "50"
     }),
-    saveSetting: (key, value) => { localStorage.setItem(key, value); DB.saveToServer(); },
+    saveSetting: (key, value) => { localStorage.setItem(key, value); DB.saveSettingsToServer(); },
     runSQL: (query) => {
         const q = query.toLowerCase().trim();
         if (q === 'select * from users') return DB.getUsers();
@@ -1299,6 +1322,7 @@ function saveMasterApiKey(v) {
     if(m) m.value = key;
     if(s) s.value = key;
     alert("Global API Kalit saqlandi!");
+    DB.saveSettingsToServer();
     fetchModels(); 
 }
 
