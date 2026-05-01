@@ -92,14 +92,16 @@ body {
 
 /* ── APP MAIN ── */
 #app-container {
-  display: none; height: 100dvh; padding: 24px; gap: 24px;
+  display: none; height: 100dvh; padding: 20px; gap: 20px;
   box-sizing: border-box;
+  overflow: hidden;
 }
 #app-container.active { display: flex; animation: entrance 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
 
 #sidebar {
   width: 340px; border-radius: 32px; display: flex; flex-direction: column; overflow: hidden;
-  border: 1px solid var(--border); flex-shrink: 0;
+  border: 1px solid var(--border); flex-shrink: 0; 
+  background: var(--glass);
 }
 .sidebar-header { padding: 32px 28px; }
 .chat-list { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
@@ -121,7 +123,8 @@ body {
   background: rgba(15, 23, 42, 0.3);
 }
 #messages {
-  flex: 1; overflow-y: auto; padding: 36px; display: flex; flex-direction: column; gap: 28px; min-height: 0;
+  flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 24px; 
+  min-height: 0; scroll-behavior: smooth;
 }
 
 .msg-wrap { display: flex; gap: 18px; align-items: flex-end; max-width: 80%; animation: msgEntrance 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
@@ -153,11 +156,12 @@ body {
 }
 
 #input-box {
-  margin: 0 36px 36px; padding: 12px; border-radius: 24px;
+  margin: 0 24px 24px; padding: 10px; border-radius: 24px;
   display: flex; gap: 10px; align-items: center; 
-  flex-shrink: 0; /* Mobil qurilmalarda siqilib qolmasligi uchun */
+  flex-shrink: 0; 
   border: 1px solid var(--border);
   background: var(--glass-bright);
+  z-index: 5;
 }
 #prompt-in {
   flex: 1; background: none; border: none; padding: 14px 20px;
@@ -252,14 +256,14 @@ input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; widt
   #sidebar.active::before { opacity: 1; pointer-events: auto; }
 
   /* App Layout */
-  #app-container { padding: 0; gap: 0; height: 100dvh; flex-direction: column; }
+  #app-container { padding: 0; gap: 0; height: 100dvh; flex-direction: column; overflow: hidden; }
   #main-stage { border-radius: 0; width: 100%; }
   #mobile-menu-btn { display: flex !important; }
 
   /* Chat */
   .msg-wrap { max-width: 92%; }
   #messages { padding: 20px 16px; gap: 20px; }
-  #input-box { margin: 8px 12px env(safe-area-inset-bottom, 12px); padding: 8px; border-radius: 18px; position: relative; bottom: 0; flex-shrink: 0; }
+  #input-box { margin: 10px 12px env(safe-area-inset-bottom, 15px); padding: 8px; border-radius: 20px; flex-shrink: 0; }
   #prompt-in { font-size: 15px; padding: 10px 14px; }
 
   /* Admin Panel */
@@ -809,9 +813,9 @@ const DB = {
             const sRes = await fetch('/api/settings');
             if (sRes.ok) {
                 const settings = await sRes.json();
-                Object.keys(settings).forEach(key => {
-                    localStorage.setItem(key, settings[key]);
-                });
+                if (settings.gemini_api_key) localStorage.setItem('gemini_api_key', settings.gemini_api_key);
+                if (settings.ai_theme) localStorage.setItem('ai_theme', settings.ai_theme);
+                if (settings.ai_bg_opacity) localStorage.setItem('ai_bg_opacity', settings.ai_bg_opacity);
                 console.log("✅ Global sozlamalar yuklandi");
             }
         } catch (e) { console.warn("Server ulanishida xato"); }
@@ -1315,13 +1319,14 @@ async function executeSQL() {
 
 function saveMasterApiKey(v) { 
     const key = v.trim();
-    DB.saveSetting('gemini_api_key', key); 
+    localStorage.setItem('gemini_api_key', key);
     // Sync inputs
     const m = document.getElementById('admin-api-key-main');
     const s = document.getElementById('admin-api-key-settings');
     if(m) m.value = key;
     if(s) s.value = key;
-    alert("Global API Kalit saqlandi!");
+    
+    // Avtomatik serverga saqlash
     DB.saveSettingsToServer();
     fetchModels(); 
 }
@@ -1365,22 +1370,18 @@ function appendMsgDOM(role, text) {
     msgs.appendChild(wrap); msgs.scrollTop = msgs.scrollHeight;
 }
 
-let isSupportMode = false;
-
 function openAdminChat() {
-    isSupportMode = true;
-    currentChatId = 'support_chat';
-    document.getElementById('chat-title').innerHTML = currentUser === 'Javoh' ? 'Userlar bilan suhbat' : 'Admin bilan bog\'lanish';
+    const adminName = 'Javoh';
+    if (currentUser === adminName) {
+        alert("Siz adminsiz! Userlar bilan muloqot qilish uchun Chat bo'limiga o'ting.");
+        return;
+    }
+    const id = `p2p_${[currentUser, adminName].sort().join('_')}`;
+    isP2PMode = true;
+    p2pTargetUser = adminName;
     showScreen('app-container');
-    renderSupportChat();
+    switchChat(id);
     if (window.innerWidth <= 900) toggleSidebar();
-}
-
-function renderSupportChat() {
-    const msgs = document.getElementById('messages');
-    msgs.innerHTML = '';
-    const supportHistory = JSON.parse(localStorage.getItem('ai_support_msgs') || '[]');
-    supportHistory.forEach(m => appendSupportMsgDOM(m));
 }
 
 function appendSupportMsgDOM(m) {
@@ -1409,25 +1410,6 @@ function appendSupportMsgDOM(m) {
 
 // Route sendMessage for Support, P2P, or AI
 async function sendMessage() {
-    if (isSupportMode) {
-        const inp = document.getElementById('prompt-in'), text = inp.value.trim();
-        if (!text) return;
-        inp.value = '';
-        
-        const msg = {
-            sender: currentUser,
-            text: text,
-            time: Date.now(),
-            theme: localStorage.getItem('ai_theme') || '#6366f1'
-        };
-        
-        const supportHistory = JSON.parse(localStorage.getItem('ai_support_msgs') || '[]');
-        supportHistory.push(msg);
-        localStorage.setItem('ai_support_msgs', JSON.stringify(supportHistory));
-        renderSupportChat();
-        return;
-    }
-
     if (isP2PMode) {
         const inp = document.getElementById('prompt-in'), text = inp.value.trim();
         if (!text || !currentChatId) return;
@@ -1488,7 +1470,7 @@ function searchUsers() {
     const q = document.getElementById('user-search-in').value.toLowerCase().trim();
     const res = document.getElementById('search-results');
     res.innerHTML = '';
-    const users = DB.getUsers().filter(u => u.user.toLowerCase().includes(q) && u.user !== currentUser && u.user !== 'Javoh');
+    const users = DB.getUsers().filter(u => u.user.toLowerCase().includes(q) && u.user !== currentUser && u.user !== 'Javoh' && u.role !== 'admin');
     
     if(users.length === 0) { res.innerHTML = `<p style="font-size:12px; color:var(--text-muted);">Natija topilmadi</p>`; return; }
     
@@ -1681,11 +1663,7 @@ window.onload = () => {
 
     // Support Chat Polling (LocalStorage simulator)
     setInterval(() => {
-        if(isSupportMode) {
-            const currentMsgs = JSON.parse(localStorage.getItem('ai_support_msgs') || '[]');
-            const domCount = document.getElementById('messages').children.length;
-            if(currentMsgs.length > domCount) renderSupportChat();
-        } else if (isP2PMode && currentChatId) {
+        if (isP2PMode && currentChatId) {
             const currentMsgs = getP2PHistory(currentChatId);
             const domCount = document.getElementById('messages').children.length;
             if(currentMsgs.length > domCount) renderHistory();
@@ -1733,7 +1711,7 @@ function p2pSearch() {
   recentWrap.style.display = 'none';
   const users = DB.getUsers().filter(u => {
     const n = u.user || u.login;
-    return n.toLowerCase().includes(q) && n !== currentUser;
+    return n.toLowerCase().includes(q) && n !== currentUser && n !== 'Javoh' && u.role !== 'admin';
   });
   if (!users.length) {
     resEl.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">Natija topilmadi</div>`;
