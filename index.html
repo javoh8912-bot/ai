@@ -123,8 +123,8 @@ body {
   background: rgba(15, 23, 42, 0.3);
 }
 #messages {
-  flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 24px; 
-  min-height: 0; scroll-behavior: smooth;
+  flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 24px;
+  min-height: 0; scroll-behavior: smooth; position: relative;
 }
 
 .msg-wrap { display: flex; gap: 18px; align-items: flex-end; max-width: 80%; animation: msgEntrance 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
@@ -158,7 +158,7 @@ body {
 #input-box {
   margin: 0 24px 24px; padding: 10px; border-radius: 24px;
   display: flex; gap: 10px; align-items: center; 
-  flex-shrink: 0; 
+  flex-shrink: 0; /* Mobil klaviatura uchun muhim */
   border: 1px solid var(--border);
   background: var(--glass-bright);
   z-index: 5;
@@ -263,7 +263,7 @@ input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; widt
   /* Chat */
   .msg-wrap { max-width: 92%; }
   #messages { padding: 20px 16px; gap: 20px; }
-  #input-box { margin: 10px 12px env(safe-area-inset-bottom, 15px); padding: 8px; border-radius: 20px; flex-shrink: 0; }
+  #input-box { margin: 10px 12px env(safe-area-inset-bottom, 15px); padding: 8px; border-radius: 20px; flex-shrink: 0; position: relative; bottom: 0; }
   #prompt-in { font-size: 15px; padding: 10px 14px; }
 
   /* Admin Panel */
@@ -807,7 +807,6 @@ const DB = {
             if (res.ok) {
                 const users = await res.json();
                 localStorage.setItem('ai_db', JSON.stringify(users));
-                console.log("✅ Bazaga ulandi");
             }
             
             const pRes = await fetch('/api/p2p');
@@ -822,7 +821,6 @@ const DB = {
                 if (settings.gemini_api_key) localStorage.setItem('gemini_api_key', settings.gemini_api_key);
                 if (settings.ai_theme) localStorage.setItem('ai_theme', settings.ai_theme);
                 if (settings.ai_bg_opacity) localStorage.setItem('ai_bg_opacity', settings.ai_bg_opacity);
-                console.log("✅ Global sozlamalar yuklandi");
             }
         } catch (e) { console.warn("Server ulanishida xato"); }
     },
@@ -1337,8 +1335,7 @@ function saveMasterApiKey(v) {
     const s = document.getElementById('admin-api-key-settings');
     if(m) m.value = key;
     if(s) s.value = key;
-    
-    // Avtomatik serverga saqlash
+
     DB.saveSettingsToServer();
     fetchModels(); 
 }
@@ -1385,12 +1382,11 @@ function appendMsgDOM(role, text) {
 function openAdminChat() {
     const adminName = 'Javoh';
     if (currentUser === adminName) {
-        openP2PScreen();
+        showScreen('p2p-container');
         return;
     }
-    openP2PScreen();
+    showScreen('p2p-container');
     p2pSelectUser(adminName, null);
-    
     if (window.innerWidth <= 900) toggleSidebar();
 }
 
@@ -1883,15 +1879,15 @@ function p2pSend() {
   if (!all[chatId]) all[chatId] = [];
   all[chatId].push({ sender: currentUser, text, time: Date.now() });
   localStorage.setItem('ai_p2p_chats', JSON.stringify(all));
-  DB.saveP2PToServer();
+  DB.saveP2PToServer(); // Serverga saqlash
   p2pRenderMsgs();
   p2pLoadRecent();
 }
 
 function p2pPoll() {
+  DB.syncWithServer(); // Har doim serverdan yangi xabarlarni olib turish
   if (p2pTarget) { p2pRenderMsgs(); p2pUpdateStatus(); }
   p2pLoadRecent();
-  DB.syncWithServer(); // Har 2 soniyada serverdan yangi xabarlarni tekshirish
 }
 
 // Global Exposure
