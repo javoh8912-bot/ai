@@ -48,7 +48,7 @@ app.post('/api/settings', (req, res) => {
     });
 });
 
-// Get P2P Chats
+// Get P2P Chats (Xabarlarni barcha qurilmalarda ko'rish uchun)
 app.get('/api/p2p', (req, res) => {
     if (!fs.existsSync(P2P_FILE)) return res.json({});
     fs.readFile(P2P_FILE, 'utf8', (err, data) => {
