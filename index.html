@@ -810,6 +810,12 @@ const DB = {
                 console.log("✅ Bazaga ulandi");
             }
             
+            const pRes = await fetch('/api/p2p');
+            if (pRes.ok) {
+                const p2pData = await pRes.json();
+                localStorage.setItem('ai_p2p_chats', JSON.stringify(p2pData));
+            }
+            
             const sRes = await fetch('/api/settings');
             if (sRes.ok) {
                 const settings = await sRes.json();
@@ -824,6 +830,12 @@ const DB = {
         try {
             const users = DB.getUsers();
             await fetch('/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(users) });
+        } catch (e) {}
+    },
+    saveP2PToServer: async () => {
+        try {
+            const chats = JSON.parse(localStorage.getItem('ai_p2p_chats') || '{}');
+            await fetch('/api/p2p', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(chats) });
         } catch (e) {}
     },
     saveSettingsToServer: async () => {
@@ -1165,7 +1177,7 @@ function appendMsgDOM(role, text) {
     else {
         const u = DB.getUsers().find(x => x.user === currentUser || x.login === currentUser);
         if (u && u.avatar) avatar.innerHTML = `<img src="${u.avatar}" style="width:100%; height:100%; object-fit:cover;">`;
-        else avatar.textContent = (currentUser || 'U')[0].toUpperCase();
+        else avatar.textContent = (u?.user || currentUser || 'U')[0].toUpperCase();
     }
     const bubble = document.createElement('div'); bubble.className = `bubble ${role}`;
     bubble.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
@@ -1373,14 +1385,12 @@ function appendMsgDOM(role, text) {
 function openAdminChat() {
     const adminName = 'Javoh';
     if (currentUser === adminName) {
-        alert("Siz adminsiz! Userlar bilan muloqot qilish uchun Chat bo'limiga o'ting.");
+        openP2PScreen();
         return;
     }
-    const id = `p2p_${[currentUser, adminName].sort().join('_')}`;
-    isP2PMode = true;
-    p2pTargetUser = adminName;
-    showScreen('app-container');
-    switchChat(id);
+    openP2PScreen();
+    p2pSelectUser(adminName, null);
+    
     if (window.innerWidth <= 900) toggleSidebar();
 }
 
@@ -1873,6 +1883,7 @@ function p2pSend() {
   if (!all[chatId]) all[chatId] = [];
   all[chatId].push({ sender: currentUser, text, time: Date.now() });
   localStorage.setItem('ai_p2p_chats', JSON.stringify(all));
+  DB.saveP2PToServer();
   p2pRenderMsgs();
   p2pLoadRecent();
 }
@@ -1880,6 +1891,7 @@ function p2pSend() {
 function p2pPoll() {
   if (p2pTarget) { p2pRenderMsgs(); p2pUpdateStatus(); }
   p2pLoadRecent();
+  DB.syncWithServer(); // Har 2 soniyada serverdan yangi xabarlarni tekshirish
 }
 
 // Global Exposure
