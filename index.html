@@ -40,9 +40,10 @@ body {
   font-family: 'Plus Jakarta Sans', sans-serif;
   background: var(--bg);
   color: var(--text);
-  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height for mobile */
+  min-height: -webkit-fill-available;
   overflow: hidden;
-  user-select: none;
+  user-select: text; /* Allow text selection */
   background-image: radial-gradient(circle at 50% 50%, #1e1b4b 0%, #030712 100%);
 }
 
@@ -68,11 +69,12 @@ body {
 
 /* ── AUTH SCREEN ── */
 #auth-container {
-  height: 100vh; display: flex; align-items: center; justify-content: center;
+  height: 100dvh; display: flex; align-items: center; justify-content: center;
   perspective: 1500px;
+  padding: 20px;
 }
 .auth-card {
-  width: 420px; padding: 56px; border-radius: 40px;
+  width: 100%; max-width: 420px; padding: 40px; border-radius: 40px;
   animation: entrance 1s cubic-bezier(0.16, 1, 0.3, 1);
 }
 @keyframes entrance { from { opacity:0; transform: translateY(30px) rotateX(-10deg); } to { opacity:1; transform: translateY(0) rotateX(0); } }
@@ -90,13 +92,14 @@ body {
 
 /* ── APP MAIN ── */
 #app-container {
-  display: none; height: 100vh; padding: 24px; gap: 24px;
+  display: none; height: 100dvh; padding: 24px; gap: 24px;
+  box-sizing: border-box;
 }
 #app-container.active { display: flex; animation: entrance 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
 
 #sidebar {
   width: 340px; border-radius: 32px; display: flex; flex-direction: column; overflow: hidden;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border); flex-shrink: 0;
 }
 .sidebar-header { padding: 32px 28px; }
 .chat-list { flex: 1; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
@@ -118,7 +121,7 @@ body {
   background: rgba(15, 23, 42, 0.3);
 }
 #messages {
-  flex: 1; overflow-y: auto; padding: 36px; display: flex; flex-direction: column; gap: 28px;
+  flex: 1; overflow-y: auto; padding: 36px; display: flex; flex-direction: column; gap: 28px; min-height: 0;
 }
 
 .msg-wrap { display: flex; gap: 18px; align-items: flex-end; max-width: 80%; animation: msgEntrance 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
@@ -151,7 +154,7 @@ body {
 
 #input-box {
   margin: 0 36px 36px; padding: 10px; border-radius: 24px;
-  display: flex; gap: 10px; align-items: center;
+  display: flex; gap: 10px; align-items: center; flex-shrink: 0;
   border: 1px solid var(--border);
 }
 #prompt-in {
@@ -235,11 +238,11 @@ input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; widt
 
   /* Sidebar: slide-in drawer */
   #sidebar {
-    position: fixed; left: -100%; z-index: 2000; width: 280px; height: 100%;
+    position: fixed; left: -100%; z-index: 2000; width: 280px; height: 100dvh;
     transition: 0.45s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: none; top: 0; border-radius: 0;
   }
-  #sidebar.active { left: 0; box-shadow: 20px 0 80px rgba(0,0,0,0.8); }
+  #sidebar.active { left: 0; box-shadow: 20px 0 80px rgba(0,0,0,0.8); display: flex !important; }
   #sidebar::before {
     content: ""; position: fixed; inset: 0; background: rgba(0,0,0,0.55);
     z-index: -1; opacity: 0; pointer-events: none; transition: 0.3s;
@@ -247,14 +250,14 @@ input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; widt
   #sidebar.active::before { opacity: 1; pointer-events: auto; }
 
   /* App Layout */
-  #app-container { padding: 0; gap: 0; }
+  #app-container { padding: 0; gap: 0; height: 100dvh; }
   #main-stage { border-radius: 0; width: 100%; }
   #mobile-menu-btn { display: flex !important; }
 
   /* Chat */
   .msg-wrap { max-width: 92%; }
   #messages { padding: 20px 16px; gap: 20px; }
-  #input-box { margin: 0 12px 16px; padding: 6px 8px; border-radius: 18px; }
+  #input-box { margin: 8px 12px 12px; padding: 6px 8px; border-radius: 18px; position: sticky; bottom: 0; }
   #prompt-in { font-size: 15px; padding: 10px 14px; }
 
   /* Admin Panel */
@@ -305,7 +308,7 @@ input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; widt
   .avatar { width: 32px; height: 32px; border-radius: 10px; font-size: 11px; flex-shrink: 0; }
 
   /* Input */
-  #input-box { margin: 0 8px 12px; border-radius: 16px; }
+  #input-box { margin: 8px; border-radius: 16px; padding: 4px; }
   #prompt-in { font-size: 14px; padding: 10px 12px; }
   #input-box .btn-primary { width: 42px; height: 42px; padding: 0; border-radius: 12px; font-size: 16px; }
 
@@ -348,7 +351,7 @@ input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; widt
 
 /* ── ADMIN PANEL ── */
 #admin-container {
-    display: none; height: 100vh; padding: 40px; overflow-y: auto;
+    display: none; height: 100dvh; padding: 40px; overflow-y: auto;
     background: var(--bg); position: relative; z-index: 10;
     opacity: 0; transform: translateY(20px); transition: 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -789,9 +792,25 @@ input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; widt
 console.log("🚀 Avenaa AI v2.6.1 (Local Fix) Starting...");
 
 /**
- * Avenaa AI Database Manager (Local Only)
+ * Avenaa AI Database Manager (Global Sync)
  */
 const DB = {
+    syncWithServer: async () => {
+        try {
+            const res = await fetch('/api/users');
+            if (res.ok) {
+                const users = await res.json();
+                localStorage.setItem('ai_db', JSON.stringify(users));
+                console.log("✅ Bazaga ulandi");
+            }
+        } catch (e) { console.warn("Server ulanishida xato"); }
+    },
+    saveToServer: async () => {
+        try {
+            const users = DB.getUsers();
+            await fetch('/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(users) });
+        } catch (e) {}
+    },
     getUsers: () => {
         try {
             const data = localStorage.getItem('ai_db');
@@ -804,6 +823,7 @@ const DB = {
         let users = DB.getUsers();
         users.push(userObj);
         localStorage.setItem('ai_db', JSON.stringify(users));
+        DB.saveToServer();
     },
     updateUser: (oldName, newData) => {
         let users = DB.getUsers();
@@ -811,6 +831,7 @@ const DB = {
         if (idx !== -1) {
             users[idx] = { ...users[idx], ...newData };
             localStorage.setItem('ai_db', JSON.stringify(users));
+            DB.saveToServer();
             return true;
         }
         return false;
@@ -844,7 +865,7 @@ const DB = {
         theme: localStorage.getItem('ai_theme') || "#6366f1",
         bgOpacity: localStorage.getItem('ai_bg_opacity') || "50"
     }),
-    saveSetting: (key, value) => localStorage.setItem(key, value),
+    saveSetting: (key, value) => { localStorage.setItem(key, value); DB.saveToServer(); },
     runSQL: (query) => {
         const q = query.toLowerCase().trim();
         if (q === 'select * from users') return DB.getUsers();
@@ -877,6 +898,11 @@ function initBackground() {
             geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
             const material = new THREE.PointsMaterial({ color: 0x6366f1, size: 2, transparent: true, opacity: 0.5 });
             particles = new THREE.Points(geometry, material);
+            
+            // Auto-update particle color based on theme
+            const currentTheme = localStorage.getItem('ai_theme') || '#6366f1';
+            material.color.set(currentTheme);
+            
             scene.add(particles);
             camera.position.z = 500;
             function animate3D() {
@@ -926,7 +952,7 @@ function initBackground() {
     animate2D();
 }
 
-const MASTER_KEY = "AIzaSyD8G_L8V8K8L8S8y8S8V8K8L8S8y8S8V8K"; // VERIFIED WORKING KEY
+const MASTER_KEY = "AIzaSyDtUsTney3wzCo3hx-AGthnKUF1CPsZb0M"; 
 const getApiKey = () => (DB.getSettings().apiKey || MASTER_KEY).trim();
 const SYSTEM_PROMPT = `Siz foydali, aqlli va do'stona AI yordamchisiz. O'zbek tilida bemalol gaplashasiz.`;
 
@@ -1174,7 +1200,7 @@ async function aiSendMessage() {
         try {
             const url = `https://generativelanguage.googleapis.com/${attempt.ver}/models/${attempt.mod}:generateContent?key=${currentApiKey}`;
             const payload = { contents };
-            if (attempt.mod.includes('1.5') || attempt.mod.includes('flash')) {
+            if (attempt.mod.includes('1.5') || attempt.mod.includes('flash') || attempt.mod.includes('pro')) {
                 payload.system_instruction = { parts: [{ text: SYSTEM_PROMPT }] };
             }
 
@@ -1264,7 +1290,17 @@ async function executeSQL() {
     inp.value = '';
 }
 
-function saveMasterApiKey(v) { DB.saveSetting('gemini_api_key', v.trim()); fetchModels(); }
+function saveMasterApiKey(v) { 
+    const key = v.trim();
+    DB.saveSetting('gemini_api_key', key); 
+    // Sync inputs
+    const m = document.getElementById('admin-api-key-main');
+    const s = document.getElementById('admin-api-key-settings');
+    if(m) m.value = key;
+    if(s) s.value = key;
+    alert("Global API Kalit saqlandi!");
+    fetchModels(); 
+}
 
 function handleAIAvatar(e) {
     const file = e.target.files[0]; if(!file) return;
@@ -1603,8 +1639,10 @@ function logout() {
 
 window.onload = () => {
     initBackground();
-    checkAuth();
-    fetchModels();
+    DB.syncWithServer().then(() => {
+        checkAuth();
+        fetchModels();
+    });
     
     // Apply saved settings
     const settings = DB.getSettings();
