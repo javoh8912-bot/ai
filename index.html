@@ -377,7 +377,8 @@ input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; widt
 }
 #admin-container.active { display: block; opacity: 1; transform: translateY(0); }
 
-.admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+.admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; flex-wrap: wrap; gap: 16px; }
+.admin-header > div:first-child { min-width: 0; }
 .admin-title p { color: var(--text-muted); font-size: 10px; letter-spacing: 2px; margin-bottom: 4px; }
 .admin-title h1 { font-family: 'Syne', sans-serif; font-size: 32px; }
 
@@ -529,7 +530,7 @@ input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; widt
           <button class="icon-btn mobile-only" onclick="toggleSidebar()" style="width:32px; height:32px; border:none; background:rgba(255,255,255,0.05);">✕</button>
       </div>
       <button class="btn btn-primary" style="width: 100%; margin-bottom:8px;" onclick="createNewChat()">+ Yangi Suhbat</button>
-      <button class="btn" style="width: 100%; background:rgba(255,255,255,0.05); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; gap:8px;" onclick="openP2PScreen()">
+      <button class="btn" style="width: 100%; color: white; background:rgba(99,102,241,0.12); border:1px solid rgba(99,102,241,0.3); display:flex; align-items:center; justify-content:center; gap:8px;" onclick="openP2PScreen()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
         Chat
       </button>
@@ -1585,7 +1586,7 @@ async function aiSendMessage() {
         }
 
         if (!success) {
-            const fallbacks = ['gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-pro', 'gemini-1.0-pro'];
+            const fallbacks = ['gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-pro', 'gemini-2.0-flash'];
             for (const m of fallbacks) {
                 if (await tryModel(m)) { success = true; break; }
             }
