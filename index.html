@@ -272,39 +272,37 @@ input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; widt
   #input-box { margin: 10px 12px env(safe-area-inset-bottom, 15px); padding: 8px; border-radius: 20px; flex-shrink: 0; position: relative; bottom: 0; }
   #prompt-in { font-size: 15px; padding: 10px 14px; }
 
-  /* Admin Panel */
+  /* Admin Panel Premium Responsive */
   #admin-container { padding: 12px; }
-  .admin-header { flex-direction: column; align-items: stretch; gap: 16px; margin-bottom: 24px; text-align: center; }
-  .admin-header h1 { font-size: 24px; }
-  .admin-header > div:last-child { justify-content: center; width: 100%; }
+  .admin-header { flex-direction: column; align-items: stretch; gap: 16px; margin-bottom: 30px; text-align: center; }
+  .admin-header p { font-size: 10px; letter-spacing: 3px; }
+  .admin-header h1 { font-size: 28px; margin-top: 4px; }
+  .admin-header > div:last-child { justify-content: center; gap: 8px; }
   
-  .stats-grid { grid-template-columns: 1fr; gap: 12px; }
-  .stat-card { padding: 20px; }
+  .stats-grid { grid-template-columns: 1fr; gap: 14px; margin-bottom: 24px; }
+  .stat-card { padding: 24px; border-radius: 28px; background: rgba(255,255,255,0.03); }
   .stat-card[style*="grid-column: span 2"] { grid-column: span 1 !important; }
+  .stat-val h2 { font-size: 32px; }
   
-  /* API Key row specific mobile fix */
-  .stat-val div[style*="display: flex"] { flex-direction: column; align-items: stretch !important; gap: 8px !important; }
-  .stat-val span[style*="white-space: nowrap"] { align-self: flex-start; }
+  .admin-tabs-scroll { gap: 8px; margin-bottom: 20px; padding-bottom: 8px; }
+  .btn-tab { padding: 10px 18px; font-size: 11px; border-radius: 12px; }
+  
+  .admin-tab h3 { font-size: 20px; margin-bottom: 20px !important; }
+  
+  /* Secure Input / Status Fix */
+  .stat-val div[style*="display: flex"] { flex-direction: column; align-items: stretch !important; gap: 12px !important; }
+  .stat-val input { font-size: 13px; padding: 12px !important; }
+  .stat-val span { font-size: 9px !important; padding: 6px 12px !important; border-radius: 10px !important; display: inline-block; align-self: center; }
+  #api-status { padding: 10px; border-radius: 12px; background: rgba(0,0,0,0.2); text-align: center; font-weight: 600; }
 
-  .admin-tabs-scroll { margin-bottom: 16px; padding-bottom: 4px; }
-  .admin-tab h3 { font-size: 18px; margin-bottom: 16px !important; }
-  
   /* Settings Modal */
-  .modal-card { width: 94%; padding: 20px; border-radius: 24px; }
+  .modal-card { width: 94%; padding: 20px; border-radius: 30px; }
 }
 
 /* --- Mobile Portrait: ≤768px --- */
 @media (max-width: 768px) {
-  #sidebar { width: 260px; }
-  .stats-grid { grid-template-columns: 1fr; }
-  .stat-card[style*="grid-column: span 2"] { grid-column: span 1 !important; }
-  .admin-title h1 { font-size: 22px; }
-  .auth-card { width: 92%; padding: 28px; border-radius: 28px; }
-
   #chat-header { padding: 12px 16px; }
   h2#chat-title { font-size: 15px !important; }
-
-  /* Bubble narrower */
   .msg-wrap { max-width: 95%; }
   .bubble { font-size: 14px; padding: 12px 16px; border-radius: 18px; }
 }
@@ -880,9 +878,21 @@ input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; widt
 console.log("🚀 Avenaa AI v2.6.1 (Local Fix) Starting...");
 
 // --- GLOBAL CONFIG ---
-const MASTER_API_KEY = "AIzaSyCmArwJc_obId_RGJG0CvYp3PyGNTegsW8";
+let MASTER_API_KEY = "AIzaSyCmArwJc_obId_RGJG0CvYp3PyGNTegsW8";
 const SYSTEM_PROMPT = `Siz foydali, aqlli va do'stona AI yordamchisiz. O'zbek tilida bemalol gaplashasiz.`;
 const getApiKey = () => localStorage.getItem('gemini_api_key') || MASTER_API_KEY;
+
+async function fetchServerSettings() {
+    try {
+        const res = await fetch('/api/settings');
+        const data = await res.json();
+        if (data && data.gemini_api_key) {
+            MASTER_API_KEY = data.gemini_api_key;
+            console.log("✅ Server API Key synced.");
+            fetchModels(); // Refresh models with new key
+        }
+    } catch (e) { console.warn("Settings sync failed:", e); }
+}
 
 
 const DB = {
@@ -1499,63 +1509,54 @@ async function aiSendMessage() {
         const contents = history.map(h => ({ role: h.role, parts: h.parts }));
         
         const tryModel = async (modelName) => {
-        try {
-            // Try both v1beta and v1 versions
-            const versions = ['v1beta', 'v1'];
-            for (const ver of versions) {
-                const url = `https://generativelanguage.googleapis.com/${ver}/models/${modelName}:generateContent?key=${currentApiKey}`;
-                
-                // Try with and without system_instruction
-                const bodies = [
-                    { 
-                        contents, 
-                        system_instruction: { parts: [{ text: SYSTEM_PROMPT }] } 
-                    },
-                    { 
-                        contents: [{ role: 'user', parts: [{ text: "SYSTEM: " + SYSTEM_PROMPT }] }, ...contents] 
-                    }
-                ];
+            try {
+                // Prioritize v1beta for Gemini 1.5 models
+                const versions = ['v1beta', 'v1'];
+                for (const ver of versions) {
+                    const url = `https://generativelanguage.googleapis.com/${ver}/models/${modelName}:generateContent?key=${currentApiKey}`;
+                    const bodies = [
+                        { contents, system_instruction: { parts: [{ text: SYSTEM_PROMPT }] } },
+                        { contents: [{ role: 'user', parts: [{ text: "SYSTEM: " + SYSTEM_PROMPT }] }, ...contents] }
+                    ];
 
-                for (const body of bodies) {
-                    const res = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(body)
-                    });
-                    const data = await res.json();
-
-                    if (data.candidates && data.candidates[0].content) {
-                        const reply = data.candidates[0].content.parts[0].text;
-                        appendMsgDOM('ai', reply);
-                        history.push({ role: 'model', parts: [{ text: reply }] });
-                        return true;
-                    } else if (data.error) {
-                        lastError = `${ver}/${modelName} (Status: ${res.status}): ${data.error.message}`;
-                    } else {
-                        lastError = `${ver}/${modelName}: Noma'lum xatolik (Kutilmagan javob).`;
+                    for (const body of bodies) {
+                        try {
+                            const res = await fetch(url, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(body)
+                            });
+                            const data = await res.json();
+                            if (data.candidates && data.candidates[0].content) {
+                                const reply = data.candidates[0].content.parts[0].text;
+                                appendMsgDOM('ai', reply);
+                                history.push({ role: 'model', parts: [{ text: reply }] });
+                                return true;
+                            } else if (data.error) {
+                                lastError = `${ver}/${modelName}: ${data.error.message} (${res.status})`;
+                                console.warn(`Model ${modelName} failed on ${ver}:`, data.error.message);
+                            }
+                        } catch (innerE) { 
+                            lastError = innerE.message; 
+                        }
                     }
                 }
+            } catch (e) { lastError = e.message; }
+            return false;
+        };
+
+        if (supportedModels && supportedModels.length > 0) {
+            for (const m of supportedModels) {
+                if (await tryModel(m)) { success = true; break; }
             }
-        } catch (e) {
-            lastError = e.message;
         }
-        return false;
-    };
 
-    // 1. Try models discovered by ListModels (if any)
-    if (supportedModels && supportedModels.length > 0) {
-        for (const m of supportedModels) {
-            if (await tryModel(m)) { success = true; break; }
+        if (!success) {
+            const fallbacks = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro'];
+            for (const m of fallbacks) {
+                if (await tryModel(m)) { success = true; break; }
+            }
         }
-    }
-
-    // 2. Fallback to hardcoded common models if discovery failed or didn't yield a working model
-    if (!success) {
-        const fallbacks = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro'];
-        for (const m of fallbacks) {
-            if (await tryModel(m)) { success = true; break; }
-        }
-    }
     }
 
     if (!success) {
@@ -2013,6 +2014,7 @@ function logout() {
 }
 
 window.onload = async () => {
+    await fetchServerSettings();
     initBackground();
     await DB.syncWithServer();
     
