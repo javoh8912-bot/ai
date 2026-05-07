@@ -1,0 +1,12 @@
+{
+  "name": "avenaa-ai",
+  "version": "1.0.0",
+  "description": "Avenaa AI - Intelligent Chat and P2P Messaging Platform",
+  "scripts": {
+
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
