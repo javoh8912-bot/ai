@@ -535,7 +535,7 @@ input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; widt
       </button>
     </div>
     <div class="chat-list" id="chat-list-dom"></div>
-      <div id="support-chat-btn-wrap" style="padding: 12px 24px; border-top: 1px solid var(--border); background:rgba(255,255,255,0.02);">
+      <div id="support-chat-btn-wrap" style="padding: 12px 24px; border-top: 1px solid var(--border); background:rgba(151, 138, 138, 0.02);">
         <button class="btn btn-primary" onclick="openAdminChat()" style="width:100%; font-size:12px; background:var(--admin-grad); display:flex; align-items:center; justify-content:center; gap:8px;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
           Admin bilan Bog'lanish
@@ -615,7 +615,8 @@ input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; widt
           <span style="font-size: 9px; color: var(--primary); font-weight: 800; white-space: nowrap; border: 1px solid var(--primary); padding: 6px 10px; border-radius: 8px; letter-spacing: 0.5px;">FAYLDAN O'ZGARTIRILADI</span>
         </div>
         <p style="font-size: 10px; margin-top: 5px; color: #94a3b8;">Joylashuv: <span style="color:var(--accent)">settings.json</span></p>
-        <p id="api-status" style="font-size: 10px; margin-top: 5px; color: #94a3b8;">Holat: Tekshirilmoqda...</p>
+        <p id="api-status" style="font-size: 11px; margin-top: 8px; font-weight: 600; padding: 10px; border-radius: 10px; background: rgba(0,0,0,0.2);">Holat: Tekshirilmoqda...</p>
+        <button class="btn btn-primary" onclick="fetchModels(true)" style="margin-top:12px; width:100%; font-size:11px; padding:8px; background:rgba(255,255,255,0.05); border:1px solid var(--border);">🔄 APIni Qayta Tekshirish</button>
       </div>
     </div>
 
@@ -1298,7 +1299,7 @@ function showScreen(id) {
   else { clearInterval(p2pPollTimer); }
 }
 
-function handleAuth() {
+async function handleAuth() {
   try {
     const userIn = document.getElementById('login-user');
     const passIn = document.getElementById('login-pass');
@@ -1306,19 +1307,39 @@ function handleAuth() {
     const user = userIn.value.trim();
     const pass = passIn.value.trim();
     const err = document.getElementById('auth-error');
+    const btn = document.getElementById('btn-auth-submit');
+
     if(!user || !pass) {
       const msg = currentLang === 'uz' ? "Barcha maydonlarni to'ldiring!" : (currentLang === 'ru' ? "Заполните все поля!" : "Please fill all fields!");
       if(err) { err.textContent = msg; err.style.display = 'block'; }
       return;
     }
+
+    // Show loading state
+    if(btn) { btn.textContent = "Yuklanmoqda..."; btn.disabled = true; }
+
+    // ALWAYS sync users from server first (cross-device support)
+    try {
+        const uRes = await fetch('/api/users');
+        if (uRes.ok) {
+            const serverUsers = await uRes.json();
+            if (Array.isArray(serverUsers) && serverUsers.length > 0) {
+                localStorage.setItem('ai_db', JSON.stringify(serverUsers));
+            }
+        }
+    } catch(e) { console.warn("Server sync skipped (offline?):", e); }
+
     const db = DB.getUsers();
+
     if (isLoginMode) {
-      const u = db.find(x => 
-        (x.user?.toLowerCase() === user.toLowerCase() || x.login?.toLowerCase() === user.toLowerCase()) && 
+      const u = db.find(x =>
+        (x.user?.toLowerCase() === user.toLowerCase() || x.login?.toLowerCase() === user.toLowerCase()) &&
         (x.pass === pass || x.password === pass)
       );
       if (u) {
         localStorage.setItem('ai_current_user', u.user || u.login);
+        // Also sync chats and settings from server
+        await DB.syncWithServer();
         checkAuth();
       } else {
         const msg = currentLang === 'uz' ? "Login yoki parol xato!" : (currentLang === 'ru' ? "Неверный логин или пароль!" : "Invalid login or password!");
@@ -1328,26 +1349,31 @@ function handleAuth() {
       if (db.find(x => x.user?.toLowerCase() === user.toLowerCase() || x.login?.toLowerCase() === user.toLowerCase())) {
         const msg = currentLang === 'uz' ? "Bu login band!" : (currentLang === 'ru' ? "Логин занят!" : "Login taken!");
         if(err) { err.textContent = msg; err.style.display = 'block'; }
+        if(btn) { btn.textContent = "Tizimga Kirish"; btn.disabled = false; }
         return;
       }
-      // Generate Unique 6-digit ID
       let newId;
       do {
           newId = Math.floor(100000 + Math.random() * 900000).toString();
       } while(db.find(x => x.id === newId));
-      
-      DB.saveUser({ 
-        user, 
-        pass, 
-        id: newId, 
-        bio: "", 
-        avatar: null, 
-        joined: new Date().toISOString().split('T')[0] 
-      });
+
+      const newUser = {
+        user,
+        pass,
+        id: newId,
+        bio: "",
+        avatar: null,
+        joined: new Date().toISOString().split('T')[0]
+      };
+      DB.saveUser(newUser);
       localStorage.setItem('ai_current_user', user);
       checkAuth();
     }
   } catch (e) { alert("Xatolik: " + e.message); }
+  finally {
+    const btn = document.getElementById('btn-auth-submit');
+    if(btn) { btn.textContent = "Tizimga Kirish"; btn.disabled = false; }
+  }
 }
 
 // Redundant switchAuth removed. Using switchAuthMode instead.
@@ -1463,11 +1489,14 @@ function appendMsgDOM(role, text) {
 
 // getApiKey already defined at top
 
-async function fetchModels() {
+async function fetchModels(isManual = false) {
     const key = getApiKey();
     const status = document.getElementById('api-status');
     const versions = ['v1beta', 'v1'];
     let found = false;
+    let errors = [];
+
+    if (status) status.innerHTML = "⏳ Tekshirilmoqda...";
 
     for (const ver of versions) {
         try {
@@ -1478,17 +1507,21 @@ async function fetchModels() {
                     .filter(m => m.supportedGenerationMethods.includes('generateContent'))
                     .map(m => m.name.split('/').pop());
                 
-                if (status) status.innerHTML = `<span style="color:#22c55e;">✅ API Faol (${ver}). Modellar: ${supportedModels.length} ta.</span>`;
-                console.log(`✅ Discovered models via ${ver}:`, supportedModels);
+                if (status) status.innerHTML = `<span style="color:#22c55e;">✅ API Faol. Modellar: ${supportedModels.length} ta.</span>`;
+                console.log(`✅ Discovered models (${ver}):`, supportedModels);
                 found = true;
                 break;
+            } else if (data.error) {
+                errors.push(`${ver}: ${data.error.message}`);
             }
-        } catch (e) { console.warn(`ListModels failed for ${ver}:`, e); }
+        } catch (e) { errors.push(`${ver}: ${e.message}`); }
     }
 
     if (!found && status) {
-        status.innerHTML = `<span style="color:#ef4444;">❌ API Xato yoki Modellar topilmadi!</span>`;
+        status.innerHTML = `<span style="color:#ef4444;">❌ API Xato: ${errors.join(' | ')}</span>`;
     }
+    if (isManual && found) alert("✅ API muvaffaqiyatli ulandi! Modellar topildi.");
+    if (isManual && !found) alert("❌ API ulanmadi. Xatolik: " + errors.join('\n'));
 }
 
 async function aiSendMessage() {
@@ -1552,7 +1585,7 @@ async function aiSendMessage() {
         }
 
         if (!success) {
-            const fallbacks = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro'];
+            const fallbacks = ['gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-pro', 'gemini-1.0-pro'];
             for (const m of fallbacks) {
                 if (await tryModel(m)) { success = true; break; }
             }
