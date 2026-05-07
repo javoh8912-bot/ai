@@ -382,8 +382,8 @@ input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; widt
 .admin-title p { color: var(--text-muted); font-size: 10px; letter-spacing: 2px; margin-bottom: 4px; }
 .admin-title h1 { font-family: 'Syne', sans-serif; font-size: 32px; }
 
-.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; margin-bottom: 48px; }
-.stat-card { padding: 32px; border-radius: 24px; display: flex; align-items: center; gap: 20px; }
+.stats-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 24px; margin-bottom: 48px; }
+.stat-card { padding: 28px; border-radius: 24px; display: flex; align-items: center; gap: 20px; }
 .stat-val h2 { font-size: 32px; font-family: 'Syne', sans-serif; }
 .stat-val p { color: var(--text-muted); font-size: 12px; }
 
@@ -616,8 +616,8 @@ input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; widt
           <span style="font-size: 9px; color: var(--primary); font-weight: 800; white-space: nowrap; border: 1px solid var(--primary); padding: 6px 10px; border-radius: 8px; letter-spacing: 0.5px;">FAYLDAN O'ZGARTIRILADI</span>
         </div>
         <p style="font-size: 10px; margin-top: 5px; color: #94a3b8;">Joylashuv: <span style="color:var(--accent)">settings.json</span></p>
-        <p id="api-status" style="font-size: 11px; margin-top: 8px; font-weight: 600; padding: 10px; border-radius: 10px; background: rgba(0,0,0,0.2);">Holat: Tekshirilmoqda...</p>
-        <button class="btn btn-primary" onclick="fetchModels(true)" style="margin-top:12px; width:100%; font-size:11px; padding:8px; background:rgba(255,255,255,0.05); border:1px solid var(--border);">🔄 APIni Qayta Tekshirish</button>
+        <p id="api-status" style="font-size: 11px; margin-top: 8px; font-weight: 600; padding: 10px 14px; border-radius: 10px; background: rgba(0,0,0,0.3); word-break: break-word; line-height: 1.6; max-height: 80px; overflow-y: auto;">Holat: Tekshirilmoqda...</p>
+        <button class="btn btn-primary" onclick="fetchModels(true)" style="margin-top:12px; width:100%; font-size:11px; padding:8px; background:rgba(99,102,241,0.1); border:1px solid rgba(99,102,241,0.3);">🔄 APIni Qayta Tekshirish</button>
       </div>
     </div>
 
@@ -880,7 +880,7 @@ input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; widt
 console.log("🚀 Avenaa AI v2.6.1 (Local Fix) Starting...");
 
 // --- GLOBAL CONFIG ---
-let MASTER_API_KEY = "AIzaSyCmArwJc_obId_RGJG0CvYp3PyGNTegsW8";
+let MASTER_API_KEY = ""; // Set GEMINI_API_KEY in Vercel Environment Variables!
 const SYSTEM_PROMPT = `Siz foydali, aqlli va do'stona AI yordamchisiz. O'zbek tilida bemalol gaplashasiz.`;
 const getApiKey = () => localStorage.getItem('gemini_api_key') || MASTER_API_KEY;
 
