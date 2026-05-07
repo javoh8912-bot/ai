@@ -696,8 +696,13 @@ input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; widt
       <h3 style="font-family: 'Syne', sans-serif; margin-bottom: 24px;">Tizim Sozlamalari</h3>
       <div class="glass" style="padding:24px; border-radius:16px;">
         <div class="input-field">
-          <label>API Key (Gemini) <span style="color:var(--primary); margin-left:10px;">[READONLY - settings.json]</span></label>
-          <input type="password" id="admin-api-key-settings" readonly placeholder="API Key settings.json faylida">
+          <label style="color: #f59e0b; font-weight: 800;">API Key (Avenaa) — Yangi kalit kiriting!</label>
+          <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 10px;">Eski kalit bloklangan. <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--primary);">aistudio.google.com</a> dan yangi kalit oling.</p>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <input type="password" id="admin-api-key-settings" placeholder="AIza..." style="flex:1; min-width:200px;" oninput="this.dataset.changed='true'">
+            <button class="btn btn-primary" onclick="saveNewApiKey()" style="padding:10px 20px; font-size:12px; background:var(--grad); border-radius:12px;">💾 Saqlash</button>
+          </div>
+          <p id="api-key-save-status" style="font-size:11px; margin-top:8px; color:var(--text-muted);"></p>
         </div>
         
         <div style="margin-top:24px; border-top:1px solid var(--border); padding-top:24px;">
@@ -1653,6 +1658,40 @@ function renderAdminData() {
     if (preview && aiAv) preview.innerHTML = `<img src="${aiAv}" style="width:100%;height:100%;border-radius:10px;object-fit:cover;">`;
 }
 
+async function saveNewApiKey() {
+    const input = document.getElementById('admin-api-key-settings');
+    const status = document.getElementById('api-key-save-status');
+    const key = input?.value?.trim();
+
+    if (!key || key.length < 20) {
+        if (status) { status.textContent = '❌ Kalit noto\'g\'ri yoki bo\'sh!'; status.style.color = '#ef4444'; }
+        return;
+    }
+
+    // Save to localStorage (immediate use)
+    localStorage.setItem('gemini_api_key', key);
+    MASTER_API_KEY = key;
+
+    // Try to save to server settings as well
+    try {
+        const settings = await (await fetch('/api/settings')).json();
+        settings.gemini_api_key = key;
+        await fetch('/api/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(settings)
+        });
+        if (status) { status.textContent = '✅ Kalit saqlandi! AI endi ishlaydi.'; status.style.color = '#22c55e'; }
+    } catch(e) {
+        if (status) { status.textContent = '✅ Kalit vaqtincha saqlandi (server: offline).'; status.style.color = '#f59e0b'; }
+    }
+
+    // Update main display + refresh models
+    const mainInput = document.getElementById('admin-api-key-main');
+    if (mainInput) mainInput.value = key;
+    fetchModels();
+}
+
 function switchAdminTab(t) {
     document.querySelectorAll('#admin-container .btn-tab').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.admin-tab').forEach(s => s.classList.remove('active'));
@@ -2341,6 +2380,7 @@ window.toggleSidebar = toggleSidebar; window.openProfile = openProfile; window.c
 window.handleAIAvatar = handleAIAvatar; window.handleAvatar = handleAvatar;
 window.updateProfile = updateProfile; window.setTheme = setTheme; window.updateBGIntensity = updateBGIntensity;
 window.openP2PScreen = openP2PScreen; window.p2pSearch = p2pSearch; window.p2pSend = p2pSend;
+window.saveNewApiKey = saveNewApiKey; window.fetchModels = fetchModels;
 </script>
 </body>
 </html>
