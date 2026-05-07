@@ -1528,7 +1528,7 @@ async function aiSendMessage() {
 
     // 2. Fallback to hardcoded common models if discovery failed or didn't yield a working model
     if (!success) {
-        const fallbacks = ['gemini-1.5-flash-latest', 'gemini-1.5-flash', 'gemini-pro', 'gemini-1.0-pro'];
+        const fallbacks = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro'];
         for (const m of fallbacks) {
             if (await tryModel(m)) { success = true; break; }
         }
@@ -1538,8 +1538,6 @@ async function aiSendMessage() {
         history.pop();
         let errMsg = `❌ Xatolik: AI javob bermadi.`;
         if (currentUser === 'Javoh') {
-            errMsg += `\n\nSabab: ${lastError}\n\nMaslahat: Google AI Studio'da API kalitni tekshiring.`;
-        } else {
             errMsg += `\n\nIltimos, admin bilan bog'laning!`;
         }
         appendMsgDOM('ai', errMsg);
