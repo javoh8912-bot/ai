@@ -236,8 +236,11 @@ input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; widt
 @media (max-width: 1024px) {
   .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
   .auth-card { width: 90%; max-width: 420px; padding: 40px; border-radius: 36px; }
-  #admin-container { padding: 24px; }
-  .admin-header h1 { font-size: 28px; }
+  #admin-container { padding: 20px; }
+  .admin-header { flex-direction: column; align-items: flex-start; gap: 20px; }
+  .admin-header h1 { font-size: 24px; }
+  .admin-tabs-scroll { overflow-x: auto; display: flex; gap: 8px; padding-bottom: 10px; width: 100%; -webkit-overflow-scrolling: touch; }
+  .admin-tabs-scroll .btn-tab { white-space: nowrap; flex: none; min-width: max-content; }
 }
 
 /* --- Mobile Landscape & Tablet Portrait: ≤900px --- */
@@ -285,6 +288,7 @@ input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; widt
 @media (max-width: 768px) {
   #sidebar { width: 260px; }
   .stats-grid { grid-template-columns: 1fr; }
+  .stat-card[style*="grid-column: span 2"] { grid-column: span 1 !important; }
   .admin-title h1 { font-size: 22px; }
   .auth-card { width: 92%; padding: 28px; border-radius: 28px; }
 
@@ -575,12 +579,12 @@ input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; widt
 
 <!-- ADMIN PANEL SCREEN -->
 <div id="admin-container">
-  <div class="admin-header">
-    <div class="admin-title">
-      <p>BOSHQARUV</p>
+  <div class="admin-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;">
+    <div>
+      <p style="font-size: 11px; color: var(--primary); font-weight: 800; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px;">Boshqaruv Paneli</p>
       <h1>Admin Panel</h1>
     </div>
-    <div style="display:flex; gap:12px;">
+    <div style="display:flex; gap:12px; flex-wrap: wrap;">
         <button class="btn btn-primary" onclick="openAdminChat()" style="background:var(--admin-grad); padding:8px 16px; font-size:12px; display:flex; align-items:center; gap:8px;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
           Userlar
@@ -627,16 +631,17 @@ input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; widt
   </div>
 
 
-    <div style="display: flex; gap: 12px; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
+    <div class="admin-tabs-scroll" style="display: flex; gap: 12px; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 12px;">
       <button class="btn-tab active" onclick="switchAdminTab('users')">Foydalanuvchilar</button>
-      <button class="btn-tab" onclick="switchAdminTab('messages')">Xabarlar Bazasi</button>
-      <button class="btn-tab" onclick="switchAdminTab('mysql')">MySQL Console</button>
+      <button class="btn-tab" onclick="switchAdminTab('messages')">Xabarlar</button>
+      <button class="btn-tab" onclick="switchAdminTab('mysql')">SQL</button>
       <button class="btn-tab" onclick="switchAdminTab('settings')">Sozlamalar</button>
     </div>
 
     <div id="admin-tab-users" class="admin-tab active">
       <h3 style="font-family: 'Syne', sans-serif; margin-bottom: 24px;">Foydalanuvchilar Ro'yxati</h3>
-      <table style="width: 100%; min-width: 500px; border-collapse: collapse; text-align: left;">
+      <div style="overflow-x: auto; background: rgba(255,255,255,0.02); border-radius: 20px; border: 1px solid var(--border);">
+        <table style="width: 100%; min-width: 600px; border-collapse: collapse; text-align: left;">
         <thead>
           <tr style="color: var(--text-muted); font-size: 12px; text-transform: uppercase;">
             <th style="padding-bottom: 16px;">User</th>
@@ -646,17 +651,18 @@ input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; widt
         </thead>
         <tbody id="admin-users-list"></tbody>
       </table>
+      </div>
     </div>
 
     <div id="admin-tab-messages" class="admin-tab">
       <h3 style="font-family: 'Syne', sans-serif; margin-bottom: 24px;">Barcha Xabarlar (Database)</h3>
-      <div style="max-height: 400px; overflow-y: auto;">
-        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+      <div style="overflow-x: auto; background: rgba(255,255,255,0.02); border-radius: 20px; border: 1px solid var(--border);">
+        <table style="width: 100%; min-width: 600px; border-collapse: collapse; text-align: left;">
           <thead>
-            <tr style="color: var(--text-muted); font-size: 11px; text-transform: uppercase;">
-              <th style="padding-bottom: 12px;">User</th>
-              <th style="padding-bottom: 12px;">Xabar</th>
-              <th style="padding-bottom: 12px;">Sana</th>
+            <tr style="color: var(--text-muted); font-size: 12px; text-transform: uppercase;">
+              <th style="padding: 16px;">User</th>
+              <th style="padding: 16px;">Text</th>
+              <th style="padding: 16px;">Sana</th>
             </tr>
           </thead>
           <tbody id="admin-messages-table"></tbody>
@@ -1471,13 +1477,16 @@ async function aiSendMessage() {
     history.push({ role: 'user', parts: [{ text }] });
     updateChatInDb();
 
-    const currentApiKey = getApiKey();
-    const contents = history.map(h => ({ role: h.role, parts: h.parts }));
-
     let success = false;
     let lastError = "";
+    const currentApiKey = getApiKey();
 
-    const tryModel = async (modelName) => {
+    if (!currentApiKey || currentApiKey.length < 10) {
+        lastError = "API Key topilmadi yoki noto'g'ri (Juda qisqa).";
+    } else {
+        const contents = history.map(h => ({ role: h.role, parts: h.parts }));
+        
+        const tryModel = async (modelName) => {
         try {
             // Try both v1beta and v1 versions
             const versions = ['v1beta', 'v1'];
@@ -1509,7 +1518,9 @@ async function aiSendMessage() {
                         history.push({ role: 'model', parts: [{ text: reply }] });
                         return true;
                     } else if (data.error) {
-                        lastError = `${ver}/${modelName}: ${data.error.message}`;
+                        lastError = `${ver}/${modelName} (Status: ${res.status}): ${data.error.message}`;
+                    } else {
+                        lastError = `${ver}/${modelName}: Noma'lum xatolik (Kutilmagan javob).`;
                     }
                 }
             }
@@ -1536,10 +1547,12 @@ async function aiSendMessage() {
 
     if (!success) {
         history.pop();
-        console.error("AI Error:", lastError);
+        console.error("AI Error Details:", lastError);
         let errMsg = `❌ Xatolik: AI javob bermadi.`;
         if (currentUser === 'Javoh') {
-          errMsg += `\n\nIltimos, admin bilan bog'laning!`;
+            errMsg += `\n\n<b>[ADMIN DEBUG]</b>\nSabab: ${lastError}\n\n<i>Maslahat: API kalit o'chgan yoki Vercel Env ulanmagan.</i>`;
+        } else {
+            errMsg += `\n\nIltimos, admin bilan bog'laning!`;
         }
         appendMsgDOM('ai', errMsg);
     }
