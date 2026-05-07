@@ -885,7 +885,7 @@ input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; widt
 console.log("🚀 Avenaa AI v2.6.1 (Local Fix) Starting...");
 
 // --- GLOBAL CONFIG ---
-let MASTER_API_KEY = "AIzaSyBA8axmiac1d6Mh03rKZUlfqchEwTvHWX0";
+let MASTER_API_KEY = localStorage.getItem('gemini_api_key') || "";
 const SYSTEM_PROMPT = `Siz foydali, aqlli va do'stona AI yordamchisiz. O'zbek tilida bemalol gaplashasiz.`;
 const getApiKey = () => localStorage.getItem('gemini_api_key') || MASTER_API_KEY;
 
