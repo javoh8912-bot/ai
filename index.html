@@ -1545,6 +1545,7 @@ async function aiSendMessage() {
             if (await tryModel(m)) { success = true; break; }
         }
     }
+    }
 
     if (!success) {
         history.pop();
