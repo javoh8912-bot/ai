@@ -1536,9 +1536,10 @@ async function aiSendMessage() {
 
     if (!success) {
         history.pop();
+        console.error("AI Error:", lastError);
         let errMsg = `❌ Xatolik: AI javob bermadi.`;
         if (currentUser === 'Javoh') {
-            errMsg += `\n\nIltimos, admin bilan bog'laning!`;
+          errMsg += `\n\nIltimos, admin bilan bog'laning!`;
         }
         appendMsgDOM('ai', errMsg);
     }
