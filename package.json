@@ -1,0 +1,13 @@
+{
+  "name": "aureoo-ai",
+  "version": "1.0.0",
+  "description": "Aureoo AI - Intelligent Chat and P2P Messaging Platform",
+  "scripts": {
+
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "@vercel/kv": "^3.0.0"
+  }
+}
