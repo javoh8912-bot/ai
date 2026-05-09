@@ -1571,9 +1571,6 @@ function renderHistory() {
     });
     msgs.scrollTop = msgs.scrollHeight;
 }
-
-
-
 // getApiKey already defined at top
 
 async function fetchModels(isManual = false) {
@@ -1595,7 +1592,6 @@ async function fetchModels(isManual = false) {
                     .map(m => m.name.split('/').pop());
                 
                 if (status) status.innerHTML = `<span style="color:#22c55e;">[OK] API Faol. Modellar: ${supportedModels.length} ta.</span>`;
-                console.log(`[OK] Discovered models (${ver}):`, supportedModels);
                 found = true;
                 break;
             } else if (data.error) {
@@ -1617,83 +1613,64 @@ async function aiSendMessage() {
     inp.value = ''; loading = true;
     appendMsgDOM('user', text);
     history.push({ role: 'user', parts: [{ text }] });
-    updateChatInDb(); // User xabarini darhol saqlash
+    updateChatInDb();
     renderHistory();
 
     let success = false;
     let lastError = "";
-    const currentApiKey = getApiKey();
-
+    let currentApiKey = getApiKey();
+    
+    // API Key tekshiruvi va serverdan qayta yuklash
     if (!currentApiKey || currentApiKey.length < 10) {
-        lastError = "API Key topilmadi yoki noto'g'ri (Juda qisqa).";
-    } else {
-        const contents = history.map(h => ({ role: h.role, parts: h.parts }));
-        
-        const tryModel = async (modelName) => {
-            try {
-                // Prioritize v1beta for Gemini 1.5 models
-                const versions = ['v1beta', 'v1'];
-                for (const ver of versions) {
-                    const url = `https://generativelanguage.googleapis.com/${ver}/models/${modelName}:generateContent?key=${currentApiKey}`;
-                    const bodies = [
-                        { 
-                            contents, 
-                            system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-                            safetySettings: [
-                                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-                                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-                                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
-                            ]
-                        }
-                    ];
+        await fetchServerSettings();
+        currentApiKey = MASTER_API_KEY;
+    }
 
-                    for (const body of bodies) {
-                        try {
-                            const res = await fetch(url, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(body)
-                            });
-                            const data = await res.json();
-                            if (data.candidates && data.candidates[0].content) {
-                                let reply = data.candidates[0].content.parts[0].text;
-                                // Ortiqcha tahlillar va belgilarni tozalash
-                                const lines = reply.split('\n');
-                                const filtered = lines.filter(l => !l.trim().startsWith('*') && !l.includes(': ') && l.trim().length > 0);
-                                if (filtered.length > 0) {
-                                    reply = filtered[filtered.length - 1].trim(); // Eng oxirgi (asosiy) javobni olish
-                                }
-                                reply = reply.replace(/^["']|["']$/g, '').trim(); // Qo'shtirnoqlarni olib tashlash
-                                
-                                appendMsgDOM('ai', reply);
-                                history.push({ role: 'model', parts: [{ text: reply }] });
-                                updateChatInDb();
-                                return true;
-                            } else if (data.error) {
-                                lastError = `${ver}/${modelName}: ${data.error.message} (${res.status})`;
-                                console.warn(`Model ${modelName} failed on ${ver}:`, data.error.message);
-                            }
-                        } catch (innerE) { 
-                            lastError = innerE.message; 
-                        }
-                    }
+    if (!currentApiKey) {
+        appendMsgDOM('ai', "[XATO] API kalit topilmadi. Iltimos, sozlamalardan API kalitni kiriting.");
+        loading = false; return;
+    }
+
+    const contents = history.map(h => ({ role: h.role, parts: h.parts }));
+    const models = ['gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-pro', 'gemini-2.0-flash'];
+    
+    for (const modelName of models) {
+        if (success) break;
+        const versions = ['v1beta', 'v1'];
+        for (const ver of versions) {
+            if (success) break;
+            try {
+                const url = `https://generativelanguage.googleapis.com/${ver}/models/${modelName}:generateContent?key=${currentApiKey}`;
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        contents, 
+                        system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+                        safetySettings: [
+                            { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                            { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                            { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                            { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+                        ]
+                    })
+                });
+                const data = await res.json();
+                if (data.candidates && data.candidates[0].content) {
+                    let reply = data.candidates[0].content.parts[0].text;
+                    const lines = reply.split('\n');
+                    const filtered = lines.filter(l => !l.trim().startsWith('*') && !l.includes(': ') && l.trim().length > 0);
+                    if (filtered.length > 0) reply = filtered[filtered.length - 1].trim();
+                    reply = reply.replace(/^["']|["']$/g, '').trim();
+                    
+                    appendMsgDOM('ai', reply);
+                    history.push({ role: 'model', parts: [{ text: reply }] });
+                    updateChatInDb();
+                    success = true;
+                } else if (data.error) {
+                    lastError = data.error.message;
                 }
             } catch (e) { lastError = e.message; }
-            return false;
-        };
-
-        if (supportedModels && supportedModels.length > 0) {
-            for (const m of supportedModels) {
-                if (await tryModel(m)) { success = true; break; }
-            }
-        }
-
-        if (!success) {
-            const fallbacks = ['gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-pro', 'gemini-2.0-flash'];
-            for (const m of fallbacks) {
-                if (await tryModel(m)) { success = true; break; }
-            }
         }
     }
 
