@@ -535,7 +535,7 @@ input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; widt
     <div class="g_id_signin"
          data-type="standard"
          data-shape="pill"
-         data-theme="filled_black"
+         data-theme="outline"
          data-text="continue_with"
          data-size="large"
          data-logo_alignment="left"
@@ -1271,8 +1271,16 @@ function checkAuth() {
   if (currentUser) {
     updateOnlineStatus();
     setInterval(updateOnlineStatus, 15000); // Heartbeat
-    if (currentUser === 'Javoh' || currentUser === 'javoh8912@gmail.com') {
+    const amIAdmin = currentUser === 'javoh8912' || currentUser === 'javoh8912@gmail.com';
+    if (amIAdmin) {
       document.getElementById('admin-switch-btn').style.display = 'block';
+      const supportBtn = document.getElementById('support-chat-btn-wrap');
+      if(supportBtn) supportBtn.style.display = 'none';
+    } else {
+      const btn = document.getElementById('admin-switch-btn');
+      if (btn) btn.style.display = 'none';
+      const supportBtn = document.getElementById('support-chat-btn-wrap');
+      if(supportBtn) supportBtn.style.display = 'block';
     }
     showScreen('app-container');
     updateUserUI();
@@ -1654,7 +1662,7 @@ async function aiSendMessage() {
         history.pop();
         console.error("AI Error Details:", lastError);
         let errMsg = `[XATO] Xatolik: AI javob bermadi.`;
-        if (currentUser === 'Javoh' || currentUser === 'javoh8912@gmail.com') {
+        if (currentUser === 'javoh8912' || currentUser === 'javoh8912@gmail.com') {
             errMsg += `\n\n<b>[ADMIN DEBUG]</b>\nSabab: ${lastError}\n\n<i>Maslahat: API kalit o'chgan yoki Vercel Env ulanmagan.</i>`;
         } else {
             errMsg += `\n\nIltimos, admin bilan bog'laning!`;
@@ -2206,8 +2214,8 @@ function p2pSearch() {
     const n = (u.user || u.login || "").toLowerCase();
     const id = (u.id || "").toLowerCase();
     const isMe = (u.user || u.login) === currentUser;
-    const isAdmin = (u.user || u.login) === 'Javoh' || (u.user || u.login) === 'javoh8912@gmail.com';
-    const amIAdmin = currentUser === 'Javoh' || currentUser === 'javoh8912@gmail.com';
+    const isAdmin = (u.user || u.login) === 'javoh8912' || (u.user || u.login) === 'javoh8912@gmail.com';
+    const amIAdmin = currentUser === 'javoh8912' || currentUser === 'javoh8912@gmail.com';
     
     // Regular users can't find Admin, but Admin can find anyone
     if (!amIAdmin && isAdmin) return false;
@@ -2223,7 +2231,7 @@ function p2pSearch() {
   users.forEach(u => {
       const item = p2pMakeItem(u);
       item.onclick = () => {
-          if (currentUser === 'Javoh' || currentUser === 'javoh8912@gmail.com') {
+          if (currentUser === 'javoh8912' || currentUser === 'javoh8912@gmail.com') {
               const chatId = `p2p_${[currentUser, u.user || u.login].sort().join('_')}`;
               localStorage.setItem(`direct_${chatId}`, 'true'); // Admin initiated
           }
@@ -2262,8 +2270,8 @@ function p2pMakeItem(uData, lastMsg) {
   
   const chatId = `p2p_${[currentUser, name].sort().join('_')}`;
   const isDirect = localStorage.getItem(`direct_${chatId}`) === 'true';
-  const isAdmin = name === 'Javoh' || name === 'javoh8912@gmail.com';
-  const amIAdmin = currentUser === 'Javoh' || currentUser === 'javoh8912@gmail.com';
+  const isAdmin = name === 'javoh8912' || name === 'javoh8912@gmail.com';
+  const amIAdmin = currentUser === 'javoh8912' || currentUser === 'javoh8912@gmail.com';
   
   let avatarHtml = uData.avatar ? `<img src="${uData.avatar}" style="width:100%;height:100%;object-fit:cover;">` : name[0].toUpperCase();
   
@@ -2326,8 +2334,8 @@ function p2pMakeMsgEl(m) {
 
   const chatId = `p2p_${[currentUser, p2pTarget].sort().join('_')}`;
   const isDirect = localStorage.getItem(`direct_${chatId}`) === 'true';
-  const isAdmin = sender === 'Javoh' || sender === 'javoh8912@gmail.com';
-  const amIAdmin = currentUser === 'Javoh' || currentUser === 'javoh8912@gmail.com';
+  const isAdmin = sender === 'javoh8912' || sender === 'javoh8912@gmail.com';
+  const amIAdmin = currentUser === 'javoh8912' || currentUser === 'javoh8912@gmail.com';
 
   const wrap = document.createElement('div');
   wrap.className = 'p2p-wrap' + (mine ? ' mine' : '');
