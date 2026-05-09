@@ -1438,10 +1438,9 @@ async function handleGoogleAuth(response) {
         const name = payload.name;
         const picture = payload.picture;
         
-        let user = email.split('@')[0];
-        
         const db = DB.getUsers();
-        let u = db.find(x => x.user?.toLowerCase() === user.toLowerCase() || x.login?.toLowerCase() === user.toLowerCase());
+        // Login sifatida email'dan foydalanamiz (persistence uchun eng xavfsiz yo'l)
+        let u = db.find(x => x.login === email || x.user === email);
         
         if (!u) {
             let newId;
@@ -1450,21 +1449,29 @@ async function handleGoogleAuth(response) {
             } while(db.find(x => x.id === newId));
 
             u = {
-                user: user,
+                user: name || email.split('@')[0],
+                login: email,
                 pass: "google-oauth",
                 id: newId,
-                bio: name,
+                bio: "Google User",
                 avatar: picture,
                 joined: new Date().toISOString().split('T')[0]
             };
             DB.saveUser(u);
-        } else if (!u.avatar && picture) {
-            DB.updateUser(user, { avatar: picture });
+        } else {
+            // Ma'lumotlarni yangilash
+            if (picture) u.avatar = picture;
+            if (name) u.user = name;
+            DB.updateUser(u.login || u.user, u);
         }
         
-        localStorage.setItem('ai_current_user', u.user || u.login);
+        localStorage.setItem('ai_current_user', u.login || u.user);
+        currentUser = u.login || u.user;
+        
+        // Chatlarni serverdan darhol yuklash
         await DB.syncWithServer();
         await checkAuth();
+        location.reload(); // To'liq yangilanish
     } catch (e) {
         console.error("Google Auth Error:", e);
         alert("Google orqali kirishda xatolik yuz berdi.");
@@ -2004,26 +2011,40 @@ function searchUsers() {
     const q = document.getElementById('user-search-in').value.toLowerCase().trim();
     const res = document.getElementById('search-results');
     res.innerHTML = '';
-    const users = DB.getUsers().filter(u => u.user.toLowerCase().includes(q) && u.user !== currentUser && u.role !== 'admin');
     
-    if(users.length === 0) { res.innerHTML = `<p style="font-size:12px; color:var(--text-muted);">Natija topilmadi</p>`; return; }
+    // Barcha foydalanuvchilar (o'zidan tashqari)
+    const users = DB.getUsers().filter(u => {
+        const match = (u.user?.toLowerCase().includes(q) || u.login?.toLowerCase().includes(q));
+        return match && u.login !== currentUser && u.user !== currentUser && u.role !== 'admin';
+    });
+    
+    if(users.length === 0) { res.innerHTML = `<p style="font-size:12px; color:var(--text-muted); text-align:center;">Foydalanuvchi topilmadi</p>`; return; }
     
     users.forEach(u => {
+        const isOnline = (Date.now() - (u.lastSeen || 0)) < 60000;
         const btn = document.createElement('div');
-        btn.style.cssText = `padding: 12px; background: rgba(255,255,255,0.05); border-radius:12px; cursor:pointer; display:flex; align-items:center; gap:12px; transition:0.3s;`;
+        btn.style.cssText = `padding: 12px; background: rgba(255,255,255,0.05); border-radius:12px; cursor:pointer; display:flex; align-items:center; gap:12px; transition:0.3s; margin-bottom:8px;`;
         btn.onmouseover = () => btn.style.background = 'rgba(255,255,255,0.1)';
         btn.onmouseout = () => btn.style.background = 'rgba(255,255,255,0.05)';
         btn.innerHTML = `
-            <div style="width:36px; height:36px; border-radius:10px; background:var(--grad); display:flex; align-items:center; justify-content:center; font-weight:bold; overflow:hidden;">
-                ${u.avatar ? `<img src="${u.avatar}" style="width:100%;height:100%;object-fit:cover;">` : u.user[0].toUpperCase()}
+            <div style="width:40px; height:40px; border-radius:12px; background:var(--grad); display:flex; align-items:center; justify-content:center; font-weight:bold; overflow:hidden; position:relative;">
+                ${u.avatar ? `<img src="${u.avatar}" style="width:100%;height:100%;object-fit:cover;">` : (u.user || u.login)[0].toUpperCase()}
+                <div style="position:absolute; bottom:0; right:0; width:10px; height:10px; border-radius:50%; background:${isOnline ? '#22c55e' : '#64748b'}; border:2px solid #0f172a;"></div>
             </div>
-            <div style="flex:1; font-weight:600; font-size:14px;">${u.user}</div>
-            <button class="btn btn-primary" style="padding:4px 12px; font-size:10px;">Chat</button>
+            <div style="flex:1;">
+                <div style="font-weight:600; font-size:14px; display:flex; align-items:center; gap:6px;">
+                    ${u.user || u.login}
+                    <span style="font-size:9px; opacity:0.5; font-weight:400;">#${u.id}</span>
+                </div>
+                <div style="font-size:11px; color:var(--text-muted);">${isOnline ? 'Online' : 'Offline'}</div>
+            </div>
+            <button class="btn btn-primary" style="padding:6px 16px; font-size:11px; border-radius:10px;">Chat</button>
         `;
         btn.onclick = () => {
             closeSearchModal();
-            const id = `p2p_${[currentUser, u.user].sort().join('_')}`;
-            switchChat(id);
+            const targetId = u.login || u.user;
+            const chatId = `p2p_${[currentUser, targetId].sort().join('_')}`;
+            switchChat(chatId);
         };
         res.appendChild(btn);
     });
