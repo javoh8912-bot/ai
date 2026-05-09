@@ -1830,6 +1830,7 @@ function handleAIAvatar(e) {
             ctx.drawImage(img, 0, 0, 100, 100);
             const b64 = c.toDataURL('image/jpeg', 0.7);
             localStorage.setItem('ai_global_avatar', b64);
+            DB.syncSettingsToServer(); // Serverga sinxronizatsiya qilish
             renderAdminData();
             alert("AI rasmi saqlandi!");
         }; img.src = evt.target.result;
@@ -1851,9 +1852,9 @@ function appendMsgDOM(role, text) {
         if (globalAv && globalAv.length > 100) {
             avatar.innerHTML = `<img src="${globalAv}" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">`;
         } else {
-            // Tizimdagi assets fayliga yo'naltirish (To'liq yo'l bilan)
-            const imgPath = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1) + 'assets/ai_avatar.png';
-            avatar.innerHTML = `<img src="${imgPath}" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;" onerror="this.style.display='none'; this.parentElement.innerHTML='<span style=\'font-size:12px; font-weight:800;\'>AI</span>';">`;
+            // Tizimdagi assets fayliga yo'naltirish
+            const imgPath = 'assets/ai_avatar.png';
+            avatar.innerHTML = `<img src="${imgPath}" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;" onerror="this.src='https://cdn-icons-png.flaticon.com/512/4712/4712035.png';">`;
         }
     } else {
         const u = DB.getUsers().find(x => x.user === currentUser || x.login === currentUser);
