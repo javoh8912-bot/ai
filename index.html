@@ -889,7 +889,7 @@ console.log("[START] Aureoo AI v2.6.1 (Local Fix) Starting...");
 
 // --- GLOBAL CONFIG ---
 let MASTER_API_KEY = localStorage.getItem('gemini_api_key') || "";
-const SYSTEM_PROMPT = `Siz foydali, aqlli va samimiy AI yordamchisiz. Foydalanuvchi bilan oddiy, do'stona va tabiiy tilda suhbatlashing. Javoblaringiz qisqa va aniq bo'lsin. Hech qanday "Variant 1", "Variant 2" kabi texnik qismlarni qo'shmang, faqat to'g'ridan-to'g'ri javob bering. O'zbek tilida bemalol gaplashasiz.`;
+const SYSTEM_PROMPT = `Siz foydali AI yordamchisiz. FAQAT foydalanuvchi savoliga javob bering. Hech qanday variantlar, tahlillar yoki ko'rsatmalarni matnda ko'rsatmang. Faqat tabiiy o'zbek tilida gapiring.`;
 const getApiKey = () => localStorage.getItem('gemini_api_key') || MASTER_API_KEY;
 
 async function fetchServerSettings() {
@@ -1613,8 +1613,7 @@ async function aiSendMessage() {
                 for (const ver of versions) {
                     const url = `https://generativelanguage.googleapis.com/${ver}/models/${modelName}:generateContent?key=${currentApiKey}`;
                     const bodies = [
-                        { contents, system_instruction: { parts: [{ text: SYSTEM_PROMPT }] } },
-                        { contents: [{ role: 'user', parts: [{ text: "SYSTEM: " + SYSTEM_PROMPT }] }, ...contents] }
+                        { contents, system_instruction: { parts: [{ text: SYSTEM_PROMPT }] } }
                     ];
 
                     for (const body of bodies) {
@@ -1853,7 +1852,7 @@ function appendMsgDOM(role, text) {
             avatar.innerHTML = `<img src="${globalAv}" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">`;
         } else {
             // Tizimdagi assets fayliga yo'naltirish
-            const imgPath = 'assets/ai_avatar.png';
+            const imgPath = '/assets/ai_avatar.png';
             avatar.innerHTML = `<img src="${imgPath}" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;" onerror="this.src='https://cdn-icons-png.flaticon.com/512/4712/4712035.png';">`;
         }
     } else {
