@@ -709,12 +709,12 @@ input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; widt
           <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;">Ushbu rasm tizim faylidan olinadi va o'zgartirish cheklangan.</p>
           <div style="display:flex; align-items:center; gap:16px;">
             <div id="ai-avatar-preview" onclick="document.getElementById('ai-avatar-upload').click()" style="width:60px; height:60px; background:rgba(255,255,255,0.05); border-radius:12px; display:flex; align-items:center; justify-content:center; border:1px dashed var(--border); cursor:pointer; overflow:hidden;">
-                <img src="assets/ai_avatar.png" style="width:100%; height:100%; object-fit:cover;">
+                <img src="assets/ai_avtar.png" style="width:100%; height:100%; object-fit:cover;">
             </div>
             <input type="file" id="ai-avatar-upload" style="display:none;" accept="image/*" onchange="handleAIAvatar(event)">
             <div style="font-size:11px; color:var(--text-muted);">
-                <div>Joylashuv: <span style="color:var(--accent)">settings.json</span></div>
-                <div style="margin-top:4px; opacity:0.6;">(Base64 formatida saqlangan)</div>
+                <div>Joylashuv: <span style="color:var(--accent)">index.html</span></div>
+                <div style="margin-top:4px; opacity:0.6;">(index.html formatida saqlangan)</div>
             </div>
           </div>
         </div>
@@ -1626,14 +1626,14 @@ async function aiSendMessage() {
                             const data = await res.json();
                             if (data.candidates && data.candidates[0].content) {
                                 let reply = data.candidates[0].content.parts[0].text;
-                                // Ortiqcha tahlillarni (Constraint, Goal va h.k.) tozalash
-                                if (reply.includes('*') || reply.includes('Constraint:')) {
-                                    const lines = reply.split('\n');
-                                    const filtered = lines.filter(l => !l.trim().startsWith('*') && !l.includes(': '));
-                                    if (filtered.length > 0) reply = filtered.join('\n').trim();
-                                    // Agar tozalashdan keyin hech narsa qolmasa, oxirgi qatorni olishga harakat qilamiz (odatda u yerda javob bo'ladi)
-                                    if (!reply) reply = lines[lines.length - 1].replace(/"/g, '').trim();
+                                // Ortiqcha tahlillar va belgilarni tozalash
+                                const lines = reply.split('\n');
+                                const filtered = lines.filter(l => !l.trim().startsWith('*') && !l.includes(': ') && l.trim().length > 0);
+                                if (filtered.length > 0) {
+                                    reply = filtered[filtered.length - 1].trim(); // Eng oxirgi (asosiy) javobni olish
                                 }
+                                reply = reply.replace(/^["']|["']$/g, '').trim(); // Qo'shtirnoqlarni olib tashlash
+                                
                                 appendMsgDOM('ai', reply);
                                 history.push({ role: 'model', parts: [{ text: reply }] });
                                 updateChatInDb();
@@ -1730,7 +1730,7 @@ function renderAdminData() {
     const preview = document.getElementById('ai-avatar-preview');
     if (preview) {
         if (aiAv) preview.innerHTML = `<img src="${aiAv}" style="width:100%;height:100%;border-radius:10px;object-fit:cover;">`;
-        else preview.innerHTML = `<img src="assets/ai_avatar.png" style="width:100%;height:100%;border-radius:10px;object-fit:cover;">`;
+        else preview.innerHTML = `<img src="assets/ai_avtar.png" style="width:100%;height:100%;border-radius:10px;object-fit:cover;">`;
     }
 }
 
