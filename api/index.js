@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const { kv } = require('@vercel/kv');
 const app = express();
 
@@ -15,7 +16,7 @@ const getKV = async (key, defaultVal) => {
 };
 
 // Get Users
-app.get('/api/users', async (req, res) => {
+app.get('/api/users', async (_, res) => {
     try {
         let users = await getKV('users', []);
         if (users.length === 0) {
@@ -58,7 +59,7 @@ app.post('/api/users/profile', async (req, res) => {
 });
 
 // Settings
-app.get('/api/settings', async (req, res) => {
+app.get('/api/settings', async (_, res) => {
     try {
         let settings = await getKV('settings', { gemini_api_key: "" });
         
@@ -121,7 +122,7 @@ app.post('/api/chats', async (req, res) => {
 });
 
 // P2P Chats
-app.get('/api/p2p', async (req, res) => {
+app.get('/api/p2p', async (_, res) => {
     try {
         const p2p = await getKV('chats_p2p', {});
         res.json(p2p);
@@ -143,6 +144,14 @@ module.exports = app;
 
 const PORT = process.env.PORT || 3000;
 if (process.env.NODE_ENV !== 'production') {
+    // Serve static files from the root directory
+    app.use('/assets', express.static(path.join(__dirname, '../assets')));
+    
+    // Serve the main HTML file
+    app.get('/', (req, res) => {
+        res.sendFile(path.join(__dirname, '../index.html'));
+    });
+
     app.listen(PORT, () => {
         console.log(`🚀 API running at http://localhost:${PORT}`);
     });
