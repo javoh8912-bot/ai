@@ -518,6 +518,29 @@ input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; widt
     </div>
     
     <button class="btn btn-primary" style="width: 100%; height: 55px; font-size: 15px;" onclick="handleAuth()" id="btn-auth-submit">Tizimga Kirish</button>
+    
+    <div style="text-align: center; margin: 20px 0; color: var(--text-muted); font-size: 12px; display: flex; align-items: center;">
+        <div style="flex: 1; height: 1px; background: var(--border);"></div>
+        <span style="padding: 0 10px;" id="auth-or-lbl">YOKI</span>
+        <div style="flex: 1; height: 1px; background: var(--border);"></div>
+    </div>
+    
+    <div id="g_id_onload"
+         data-client_id="324533255161-5t9upna12d3u69gnk94ei9os7oktg347.apps.googleusercontent.com"
+         data-context="signin"
+         data-ux_mode="popup"
+         data-callback="handleGoogleAuth"
+         data-auto_prompt="false">
+    </div>
+    <div class="g_id_signin"
+         data-type="standard"
+         data-shape="pill"
+         data-theme="filled_black"
+         data-text="continue_with"
+         data-size="large"
+         data-logo_alignment="left"
+         style="display: flex; justify-content: center; width: 100%;">
+    </div>
   </div>
 </div>
 
@@ -815,7 +838,7 @@ input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; widt
     <!-- LEFT PANEL -->
     <div id="p2p-left">
       <div id="p2p-search-wrap">
-        <input type="text" id="p2p-search-in" placeholder="🔍 User qidirish..." oninput="p2pSearch()">
+        <input type="text" id="p2p-search-in" placeholder="User qidirish..." oninput="p2pSearch()">
       </div>
       <div id="p2p-user-list">
         <div id="p2p-search-res"></div>
@@ -856,9 +879,10 @@ input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; widt
 
 <!-- Scripts -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 // STARTUP DIAGNOSTIC
-console.log("🚀 Aureoo AI v2.6.1 (Local Fix) Starting...");
+console.log("[START] Aureoo AI v2.6.1 (Local Fix) Starting...");
 
 // --- GLOBAL CONFIG ---
 let MASTER_API_KEY = localStorage.getItem('gemini_api_key') || "";
@@ -1247,7 +1271,7 @@ function checkAuth() {
   if (currentUser) {
     updateOnlineStatus();
     setInterval(updateOnlineStatus, 15000); // Heartbeat
-    if (currentUser === 'Javoh') {
+    if (currentUser === 'Javoh' || currentUser === 'javoh8912@gmail.com') {
       document.getElementById('admin-switch-btn').style.display = 'block';
     }
     showScreen('app-container');
@@ -1358,6 +1382,55 @@ async function handleAuth() {
   }
 }
 
+function decodeJwtResponse(token) {
+    let base64Url = token.split('.')[1];
+    let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    let jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+    return JSON.parse(jsonPayload);
+}
+
+async function handleGoogleAuth(response) {
+    try {
+        const payload = decodeJwtResponse(response.credential);
+        const email = payload.email;
+        const name = payload.name;
+        const picture = payload.picture;
+        
+        let user = email.split('@')[0];
+        
+        const db = DB.getUsers();
+        let u = db.find(x => x.user?.toLowerCase() === user.toLowerCase() || x.login?.toLowerCase() === user.toLowerCase());
+        
+        if (!u) {
+            let newId;
+            do {
+                newId = Math.floor(100000 + Math.random() * 900000).toString();
+            } while(db.find(x => x.id === newId));
+
+            u = {
+                user: user,
+                pass: "google-oauth",
+                id: newId,
+                bio: name,
+                avatar: picture,
+                joined: new Date().toISOString().split('T')[0]
+            };
+            DB.saveUser(u);
+        } else if (!u.avatar && picture) {
+            DB.updateUser(user, { avatar: picture });
+        }
+        
+        localStorage.setItem('ai_current_user', u.user || u.login);
+        await DB.syncWithServer();
+        checkAuth();
+    } catch (e) {
+        console.error("Google Auth Error:", e);
+        alert("Google orqali kirishda xatolik yuz berdi.");
+    }
+}
+
 // Redundant switchAuth removed. Using switchAuthMode instead.
 
 function loadChatsList() {
@@ -1406,7 +1479,7 @@ function switchChat(id) {
         // P2P Chat switching
         const target = id.replace('p2p_', '').replace(currentUser, '').replace('_', '');
         p2pTargetUser = target;
-        document.getElementById('chat-title').innerHTML = `👤 ${p2pTargetUser}`;
+        document.getElementById('chat-title').innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 6px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> ${p2pTargetUser}`;
         
         // P2P Online Status
         const uData = DB.getUsers().find(u => u.user === p2pTargetUser || u.login === p2pTargetUser);
@@ -1454,8 +1527,11 @@ function appendMsgDOM(role, text) {
     const avatar = document.createElement('div'); avatar.className = `avatar ${role}`;
     if (role === 'ai') {
         const globalAv = localStorage.getItem('ai_global_avatar');
-        if (globalAv) avatar.innerHTML = `<img src="${globalAv}" style="width:100%; height:100%; object-fit:cover;">`;
-        else avatar.innerHTML = `<img src="assets/ai_avatar.png" style="width:100%; height:100%; object-fit:cover;">`;
+        let avatarSize = text.length > 200 ? '34px' : '44px';
+        avatar.style.width = avatarSize;
+        avatar.style.height = avatarSize;
+        if (globalAv) avatar.innerHTML = `<img src="${globalAv}" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">`;
+        else avatar.innerHTML = `<img src="assets/ai_avatar.png" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">`;
     }
     else {
         const u = DB.getUsers().find(x => x.user === currentUser || x.login === currentUser);
@@ -1478,7 +1554,7 @@ async function fetchModels(isManual = false) {
     let found = false;
     let errors = [];
 
-    if (status) status.innerHTML = "⏳ Tekshirilmoqda...";
+    if (status) status.innerHTML = "Tekshirilmoqda...";
 
     for (const ver of versions) {
         try {
@@ -1489,8 +1565,8 @@ async function fetchModels(isManual = false) {
                     .filter(m => m.supportedGenerationMethods.includes('generateContent'))
                     .map(m => m.name.split('/').pop());
                 
-                if (status) status.innerHTML = `<span style="color:#22c55e;">✅ API Faol. Modellar: ${supportedModels.length} ta.</span>`;
-                console.log(`✅ Discovered models (${ver}):`, supportedModels);
+                if (status) status.innerHTML = `<span style="color:#22c55e;">[OK] API Faol. Modellar: ${supportedModels.length} ta.</span>`;
+                console.log(`[OK] Discovered models (${ver}):`, supportedModels);
                 found = true;
                 break;
             } else if (data.error) {
@@ -1500,10 +1576,10 @@ async function fetchModels(isManual = false) {
     }
 
     if (!found && status) {
-        status.innerHTML = `<span style="color:#ef4444;">❌ API Xato: ${errors.join(' | ')}</span>`;
+        status.innerHTML = `<span style="color:#ef4444;">[XATO] API Xato: ${errors.join(' | ')}</span>`;
     }
-    if (isManual && found) alert("✅ API muvaffaqiyatli ulandi! Modellar topildi.");
-    if (isManual && !found) alert("❌ API ulanmadi. Xatolik: " + errors.join('\n'));
+    if (isManual && found) alert("[OK] API muvaffaqiyatli ulandi! Modellar topildi.");
+    if (isManual && !found) alert("[XATO] API ulanmadi. Xatolik: " + errors.join('\n'));
 }
 
 async function aiSendMessage() {
@@ -1577,8 +1653,8 @@ async function aiSendMessage() {
     if (!success) {
         history.pop();
         console.error("AI Error Details:", lastError);
-        let errMsg = `❌ Xatolik: AI javob bermadi.`;
-        if (currentUser === 'Javoh') {
+        let errMsg = `[XATO] Xatolik: AI javob bermadi.`;
+        if (currentUser === 'Javoh' || currentUser === 'javoh8912@gmail.com') {
             errMsg += `\n\n<b>[ADMIN DEBUG]</b>\nSabab: ${lastError}\n\n<i>Maslahat: API kalit o'chgan yoki Vercel Env ulanmagan.</i>`;
         } else {
             errMsg += `\n\nIltimos, admin bilan bog'laning!`;
@@ -1595,7 +1671,8 @@ function updateChatInDb() {
     const idx = chats[currentUser]?.findIndex(c => c.id === currentChatId);
     if (idx !== -1 && idx !== undefined) {
         chats[currentUser][idx].history = history;
-        if (chats[currentUser][idx].title === "Yangi Suhbat" && history.length > 0) {
+        const defaultTitles = ["Yangi Suhbat", "+ Yangi Suhbat", "+ Новый чат", "Новый чат", "+ New Chat", "New Chat"];
+        if (defaultTitles.includes(chats[currentUser][idx].title) && history.length > 0) {
             chats[currentUser][idx].title = history[0].parts[0].text.substring(0, 20) + "...";
             loadChatsList();
         }
@@ -2129,10 +2206,11 @@ function p2pSearch() {
     const n = (u.user || u.login || "").toLowerCase();
     const id = (u.id || "").toLowerCase();
     const isMe = (u.user || u.login) === currentUser;
-    const isAdmin = (u.user || u.login) === 'Javoh';
+    const isAdmin = (u.user || u.login) === 'Javoh' || (u.user || u.login) === 'javoh8912@gmail.com';
+    const amIAdmin = currentUser === 'Javoh' || currentUser === 'javoh8912@gmail.com';
     
     // Regular users can't find Admin, but Admin can find anyone
-    if (currentUser !== 'Javoh' && isAdmin) return false;
+    if (!amIAdmin && isAdmin) return false;
     
     // Search by Name or ID (#123456 or 123456)
     const query = q.startsWith('#') ? q.substring(1) : q;
@@ -2145,7 +2223,7 @@ function p2pSearch() {
   users.forEach(u => {
       const item = p2pMakeItem(u);
       item.onclick = () => {
-          if (currentUser === 'Javoh') {
+          if (currentUser === 'Javoh' || currentUser === 'javoh8912@gmail.com') {
               const chatId = `p2p_${[currentUser, u.user || u.login].sort().join('_')}`;
               localStorage.setItem(`direct_${chatId}`, 'true'); // Admin initiated
           }
@@ -2184,12 +2262,13 @@ function p2pMakeItem(uData, lastMsg) {
   
   const chatId = `p2p_${[currentUser, name].sort().join('_')}`;
   const isDirect = localStorage.getItem(`direct_${chatId}`) === 'true';
-  const isAdmin = name === 'Javoh';
+  const isAdmin = name === 'Javoh' || name === 'javoh8912@gmail.com';
+  const amIAdmin = currentUser === 'Javoh' || currentUser === 'javoh8912@gmail.com';
   
   let avatarHtml = uData.avatar ? `<img src="${uData.avatar}" style="width:100%;height:100%;object-fit:cover;">` : name[0].toUpperCase();
   
   // Custom Admin Avatar for Support Mode
-  if (isAdmin && !isDirect && currentUser !== 'Javoh') {
+  if (isAdmin && !isDirect && !amIAdmin) {
       avatarHtml = `<div style="background:var(--admin-grad);width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:white;font-size:18px;">👑</div>`;
   }
 
@@ -2247,7 +2326,8 @@ function p2pMakeMsgEl(m) {
 
   const chatId = `p2p_${[currentUser, p2pTarget].sort().join('_')}`;
   const isDirect = localStorage.getItem(`direct_${chatId}`) === 'true';
-  const isAdmin = sender === 'Javoh';
+  const isAdmin = sender === 'Javoh' || sender === 'javoh8912@gmail.com';
+  const amIAdmin = currentUser === 'Javoh' || currentUser === 'javoh8912@gmail.com';
 
   const wrap = document.createElement('div');
   wrap.className = 'p2p-wrap' + (mine ? ' mine' : '');
@@ -2260,8 +2340,8 @@ function p2pMakeMsgEl(m) {
     : (sender||'?')[0].toUpperCase();
 
   // Custom Admin Avatar for Support Mode
-  if (isAdmin && !isDirect && currentUser !== 'Javoh') {
-      avatarHtml = `<div style="background:var(--admin-grad);width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:white;font-size:14px;">👑</div>`;
+  if (isAdmin && !isDirect && !amIAdmin) {
+      avatarHtml = `<div style="background:var(--admin-grad);width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:white;font-size:14px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 4h20M2 20h20M4 8l4 4-2-8 6 4 6-4-2 8 4-4"/></svg></div>`;
   }
   smAv.innerHTML = avatarHtml;
 
@@ -2357,6 +2437,12 @@ window.handleAIAvatar = handleAIAvatar; window.handleAvatar = handleAvatar;
 window.updateProfile = updateProfile; window.setTheme = setTheme; window.updateBGIntensity = updateBGIntensity;
 window.openP2PScreen = openP2PScreen; window.p2pSearch = p2pSearch; window.p2pSend = p2pSend;
 window.saveNewApiKey = saveNewApiKey; window.fetchModels = fetchModels;
+
+// INITIALIZATION
+window.addEventListener('DOMContentLoaded', () => {
+    updateAppLanguage(currentLang);
+    checkAuth();
+});
 </script>
 </body>
 </html>
