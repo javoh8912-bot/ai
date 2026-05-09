@@ -1828,12 +1828,13 @@ function appendMsgDOM(role, text) {
     
     if (role === 'ai') {
         const globalAv = localStorage.getItem('ai_global_avatar');
-        // Rasm o'lchami endi har doim o'zgarmas (44px) bo'lib qoladi
-        avatar.style.width = '44px';
-        avatar.style.height = '44px';
+        // Matn 400 belgidan oshsa rasm 30px ga kichrayadi, aks holda 44px qoladi
+        let size = text.length > 400 ? '30px' : '44px';
+        avatar.style.width = size;
+        avatar.style.height = size;
 
         if (globalAv) avatar.innerHTML = `<img src="${globalAv}" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">`;
-        else avatar.innerHTML = `<img src="assets/avatar_ai.png" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">`;
+        else avatar.innerHTML = `<img src="assets/ai_avatar.png" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">`;
     } else {
         const u = DB.getUsers().find(x => x.user === currentUser || x.login === currentUser);
         if (u && u.avatar) avatar.innerHTML = `<img src="${u.avatar}" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">`;
