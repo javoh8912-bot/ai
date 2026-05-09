@@ -1529,7 +1529,12 @@ function renderHistory() {
         msgs.innerHTML = `<div style="text-align:center; margin-top:100px; color:var(--text-muted);"><h1 style="font-family:'Syne';">${t.ai_title}</h1><p>${t.ai_help}</p></div>`;
         return;
     }
-    history.forEach(m => appendMsgDOM(m.role === 'user' ? 'user' : 'ai', m.parts[0].text));
+    history.forEach(m => {
+        let role = m.role === 'user' ? 'user' : 'ai';
+        // P2P yoki Support xabarlari uchun role'ni aniqlashtirish
+        if (m.sender && m.sender !== currentUser) role = 'ai';
+        appendMsgDOM(role, m.parts ? m.parts[0].text : (m.text || ''));
+    });
     msgs.scrollTop = msgs.scrollHeight;
 }
 
@@ -1684,7 +1689,12 @@ function renderAdminData() {
             tr.innerHTML = `
                 <td>${name}</td>
                 <td>#${u.id || '?'}</td>
-                <td><button class="btn" style="padding:4px 8px; font-size:10px; background:var(--primary);" onclick="adminChangeID('${name}')">ID tahrirlash</button></td>
+                <td>
+                    <div style="display:flex; gap:8px;">
+                        <button class="btn" style="padding:4px 8px; font-size:10px; background:var(--primary);" onclick="adminChangeID('${name}')">ID tahrirlash</button>
+                        ${name !== currentUser ? `<button class="btn" style="padding:4px 8px; font-size:10px; background:#ef4444;" onclick="adminDeleteUser('${name}')">O'chirish</button>` : ''}
+                    </div>
+                </td>
             `;
             list.appendChild(tr);
         });
@@ -1776,6 +1786,15 @@ function adminChangeID(targetUser) {
     }
 }
 
+function adminDeleteUser(targetUser) {
+    if(!confirm(`${targetUser} foydalanuvchisini o'chirmoqchimisiz?`)) return;
+    const db = DB.getUsers().filter(u => (u.user || u.login) !== targetUser);
+    localStorage.setItem('ai_db', JSON.stringify(db));
+    DB.syncUsersToServer();
+    renderAdminData();
+    alert("Foydalanuvchi o'chirildi.");
+}
+
 function saveMasterApiKey(v) { 
     const key = v.trim();
     localStorage.setItem('gemini_api_key', key);
@@ -1811,13 +1830,17 @@ function appendMsgDOM(role, text) {
     
     if (role === 'ai') {
         const globalAv = localStorage.getItem('ai_global_avatar');
-        // Matn 400 belgidan oshsa rasm 30px ga kichrayadi, aks holda 44px qoladi
         let size = text.length > 400 ? '30px' : '44px';
         avatar.style.width = size;
         avatar.style.height = size;
+        avatar.textContent = ''; // Oldingi matnni tozalash
 
-        if (globalAv) avatar.innerHTML = `<img src="${globalAv}" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">`;
-        else avatar.innerHTML = `<img src="assets/ai_avatar.png" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">`;
+        if (globalAv && globalAv.length > 100) {
+            avatar.innerHTML = `<img src="${globalAv}" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">`;
+        } else {
+            // Tizimdagi assets fayliga yo'naltirish (Fallback bilan)
+            avatar.innerHTML = `<img src="assets/ai_avatar.png" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;" onerror="this.style.display='none'; this.parentElement.innerHTML='<span style=\'font-size:12px; font-weight:800;\'>AI</span>';">`;
+        }
     } else {
         const u = DB.getUsers().find(x => x.user === currentUser || x.login === currentUser);
         if (u && u.avatar) avatar.innerHTML = `<img src="${u.avatar}" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">`;
@@ -2439,6 +2462,14 @@ window.saveNewApiKey = saveNewApiKey; window.fetchModels = fetchModels;
 
 // INITIALIZATION
 window.addEventListener('DOMContentLoaded', () => {
+    // Eski adminni tozalash (faqat bir marta)
+    const db = DB.getUsers();
+    const cleanDb = db.filter(u => u.user !== 'Javoh');
+    if (db.length !== cleanDb.length) {
+        localStorage.setItem('ai_db', JSON.stringify(cleanDb));
+        DB.syncUsersToServer();
+    }
+
     updateAppLanguage(currentLang);
     checkAuth();
 });
