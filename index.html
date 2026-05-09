@@ -1526,7 +1526,6 @@ function renderHistory() {
     msgs.innerHTML = '';
     const t = I18N[currentLang];
     if (history.length === 0) {
-        msgs.innerHTML = `<div style="text-align:center; margin-top:100px; color:var(--text-muted);"><h1 style="font-family:'Syne';">${t.ai_title}</h1><p>${t.ai_help}</p></div>`;
         return;
     }
     history.forEach(m => {
@@ -1838,8 +1837,9 @@ function appendMsgDOM(role, text) {
         if (globalAv && globalAv.length > 100) {
             avatar.innerHTML = `<img src="${globalAv}" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">`;
         } else {
-            // Tizimdagi assets fayliga yo'naltirish (Fallback bilan)
-            avatar.innerHTML = `<img src="assets/ai_avatar.png" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;" onerror="this.style.display='none'; this.parentElement.innerHTML='<span style=\'font-size:12px; font-weight:800;\'>AI</span>';">`;
+            // Tizimdagi assets fayliga yo'naltirish (To'liq yo'l bilan)
+            const imgPath = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1) + 'assets/ai_avatar.png';
+            avatar.innerHTML = `<img src="${imgPath}" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;" onerror="this.style.display='none'; this.parentElement.innerHTML='<span style=\'font-size:12px; font-weight:800;\'>AI</span>';">`;
         }
     } else {
         const u = DB.getUsers().find(x => x.user === currentUser || x.login === currentUser);
@@ -1849,8 +1849,15 @@ function appendMsgDOM(role, text) {
 
     const bubble = document.createElement('div'); bubble.className = `bubble ${role}`;
     bubble.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
-    if (role === 'user') { wrap.appendChild(bubble); wrap.appendChild(avatar); }
-    else { wrap.appendChild(avatar); wrap.appendChild(bubble); }
+    
+    if (role === 'user') { 
+        // User xabarlarini yashirish (User talabiga binoan)
+        wrap.style.display = 'none';
+        wrap.appendChild(bubble); wrap.appendChild(avatar); 
+    }
+    else { 
+        wrap.appendChild(avatar); wrap.appendChild(bubble); 
+    }
     msgs.appendChild(wrap); msgs.scrollTop = msgs.scrollHeight;
 }
 
