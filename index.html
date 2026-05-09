@@ -1271,7 +1271,8 @@ function checkAuth() {
   if (currentUser) {
     updateOnlineStatus();
     setInterval(updateOnlineStatus, 15000); // Heartbeat
-    const amIAdmin = currentUser === 'javoh8912' || currentUser === 'javoh8912@gmail.com';
+    // Admin tekshiruvi (Javoh, javoh8912 va javoh8912@gmail.com uchun)
+    const amIAdmin = currentUser === 'javoh8912' || currentUser === 'javoh8912@gmail.com' || currentUser === 'Javoh';
     if (amIAdmin) {
       document.getElementById('admin-switch-btn').style.display = 'block';
       const supportBtn = document.getElementById('support-chat-btn-wrap');
@@ -2012,7 +2013,8 @@ function updateUserUI() {
 
     const supportBtnWrap = document.getElementById('support-chat-btn-wrap');
     if(supportBtnWrap) {
-        supportBtnWrap.style.display = (currentUser === 'Javoh') ? 'none' : 'block';
+        const amIAdmin = currentUser === 'javoh8912' || currentUser === 'javoh8912@gmail.com' || currentUser === 'Javoh';
+        supportBtnWrap.style.display = amIAdmin ? 'none' : 'block';
     }
 }
 
