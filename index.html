@@ -889,7 +889,7 @@ console.log("[START] Aureoo AI v2.6.1 (Local Fix) Starting...");
 
 // --- GLOBAL CONFIG ---
 let MASTER_API_KEY = localStorage.getItem('gemini_api_key') || "";
-const SYSTEM_PROMPT = `Siz foydali, aqlli va do'stona AI yordamchisiz. O'zbek tilida bemalol gaplashasiz.`;
+const SYSTEM_PROMPT = `Siz foydali, aqlli va samimiy AI yordamchisiz. Foydalanuvchi bilan oddiy, do'stona va tabiiy tilda suhbatlashing. Javoblaringiz qisqa va aniq bo'lsin. Hech qanday "Variant 1", "Variant 2" kabi texnik qismlarni qo'shmang, faqat to'g'ridan-to'g'ri javob bering. O'zbek tilida bemalol gaplashasiz.`;
 const getApiKey = () => localStorage.getItem('gemini_api_key') || MASTER_API_KEY;
 
 async function fetchServerSettings() {
@@ -970,8 +970,13 @@ const DB = {
             const pRes = await fetch('/api/p2p');
             if (pRes.ok) localStorage.setItem('ai_p2p_chats', JSON.stringify(await pRes.json()));
 
-            const cRes = await fetch('/api/chats');
-            if (cRes.ok) localStorage.setItem('ai_chats', JSON.stringify(await cRes.json()));
+            const cRes = await fetch(`/api/chats?user=${encodeURIComponent(currentUser)}`);
+            if (cRes.ok) {
+                const userChats = await cRes.json();
+                const chats = DB.getChats();
+                chats[currentUser] = userChats;
+                localStorage.setItem('ai_chats', JSON.stringify(chats));
+            }
         } catch (e) { console.warn("Sync failed:", e); }
     },
     syncUsersToServer: async () => {
@@ -981,8 +986,13 @@ const DB = {
     },
     syncChatsToServer: async () => {
         try {
-            // Sync AI Chats
-            await fetch('/api/chats', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(DB.getChats()) });
+            // Sync AI Chats (User-specific)
+            const userChats = DB.getUserChats(currentUser);
+            await fetch('/api/chats', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ user: currentUser, chats: userChats }) 
+            });
             // Sync P2P Chats
             await fetch('/api/p2p', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(JSON.parse(localStorage.getItem('ai_p2p_chats') || '{}')) });
         } catch (e) {}
@@ -1269,25 +1279,28 @@ let p2pTargetUser = null;
 let loading = false;
 let supportedModels = [];
 
-function checkAuth() {
+async function checkAuth() {
   currentUser = localStorage.getItem('ai_current_user');
   if (currentUser) {
+    await DB.syncWithServer(); // Serverdan barcha ma'lumotlarni (chatlar bilan birga) olamiz
     updateOnlineStatus();
     setInterval(updateOnlineStatus, 15000); // Heartbeat
-    // Admin tekshiruvi (javoh8912 va javoh8912@gmail.com uchun)
+    
     const amIAdmin = currentUser === 'javoh8912' || currentUser === 'javoh8912@gmail.com';
     if (amIAdmin) {
-      document.getElementById('admin-switch-btn').style.display = 'block';
+      const adminBtn = document.getElementById('admin-switch-btn');
+      if (adminBtn) adminBtn.style.display = 'block';
       const supportBtn = document.getElementById('support-chat-btn-wrap');
       if(supportBtn) supportBtn.style.display = 'none';
     } else {
-      const btn = document.getElementById('admin-switch-btn');
-      if (btn) btn.style.display = 'none';
+      const adminBtn = document.getElementById('admin-switch-btn');
+      if (adminBtn) adminBtn.style.display = 'none';
       const supportBtn = document.getElementById('support-chat-btn-wrap');
       if(supportBtn) supportBtn.style.display = 'block';
     }
     showScreen('app-container');
     updateUserUI();
+    loadChatsList();
   } else {
     showScreen('auth-container');
   }
@@ -1357,8 +1370,7 @@ async function handleAuth() {
       if (u) {
         localStorage.setItem('ai_current_user', u.user || u.login);
         // Also sync chats and settings from server
-        await DB.syncWithServer();
-        checkAuth();
+        await checkAuth();
       } else {
         const msg = currentLang === 'uz' ? "Login yoki parol xato!" : (currentLang === 'ru' ? "Неверный логин или пароль!" : "Invalid login or password!");
         if(err) { err.textContent = msg; err.style.display = 'block'; }
@@ -1385,7 +1397,7 @@ async function handleAuth() {
       };
       DB.saveUser(newUser);
       localStorage.setItem('ai_current_user', user);
-      checkAuth();
+      await checkAuth();
     }
   } catch (e) { alert("Xatolik: " + e.message); }
   finally {
@@ -1436,7 +1448,7 @@ async function handleGoogleAuth(response) {
         
         localStorage.setItem('ai_current_user', u.user || u.login);
         await DB.syncWithServer();
-        checkAuth();
+        await checkAuth();
     } catch (e) {
         console.error("Google Auth Error:", e);
         alert("Google orqali kirishda xatolik yuz berdi.");
@@ -1582,7 +1594,8 @@ async function aiSendMessage() {
     inp.value = ''; loading = true;
     appendMsgDOM('user', text);
     history.push({ role: 'user', parts: [{ text }] });
-    updateChatInDb();
+    updateChatInDb(); // User xabarini darhol saqlash
+    renderHistory();
 
     let success = false;
     let lastError = "";
@@ -1616,6 +1629,7 @@ async function aiSendMessage() {
                                 const reply = data.candidates[0].content.parts[0].text;
                                 appendMsgDOM('ai', reply);
                                 history.push({ role: 'model', parts: [{ text: reply }] });
+                                updateChatInDb(); // AI xabarini darhol saqlash
                                 return true;
                             } else if (data.error) {
                                 lastError = `${ver}/${modelName}: ${data.error.message} (${res.status})`;
@@ -1851,8 +1865,6 @@ function appendMsgDOM(role, text) {
     bubble.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
     
     if (role === 'user') { 
-        // User xabarlarini yashirish (User talabiga binoan)
-        wrap.style.display = 'none';
         wrap.appendChild(bubble); wrap.appendChild(avatar); 
     }
     else { 
@@ -2468,7 +2480,7 @@ window.openP2PScreen = openP2PScreen; window.p2pSearch = p2pSearch; window.p2pSe
 window.saveNewApiKey = saveNewApiKey; window.fetchModels = fetchModels;
 
 // INITIALIZATION
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
     // Eski adminni tozalash (faqat bir marta)
     const db = DB.getUsers();
     const cleanDb = db.filter(u => u.user !== 'Javoh');
@@ -2478,7 +2490,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     updateAppLanguage(currentLang);
-    checkAuth();
+    await checkAuth();
 });
 </script>
 </body>
