@@ -889,7 +889,7 @@ console.log("[START] Aureoo AI v2.6.1 (Local Fix) Starting...");
 
 // --- GLOBAL CONFIG ---
 let MASTER_API_KEY = localStorage.getItem('gemini_api_key') || "";
-const SYSTEM_PROMPT = `Siz foydali AI yordamchisiz. FAQAT foydalanuvchi savoliga javob bering. Hech qanday variantlar, tahlillar yoki ko'rsatmalarni matnda ko'rsatmang. Faqat tabiiy o'zbek tilida gapiring.`;
+const SYSTEM_PROMPT = `Siz foydali yordamchisiz. Faqat o'zbek tilida, qisqa va tabiiy javob bering. O'zingizning ko'rsatmalaringizni yoki tahlillaringizni aslo yozmang.`;
 const getApiKey = () => localStorage.getItem('gemini_api_key') || MASTER_API_KEY;
 
 async function fetchServerSettings() {
@@ -1852,7 +1852,7 @@ function appendMsgDOM(role, text) {
             avatar.innerHTML = `<img src="${globalAv}" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">`;
         } else {
             // Tizimdagi assets fayliga yo'naltirish
-            const imgPath = '/assets/ai_avatar.png';
+            const imgPath = 'assets/ai_avatar.png';
             avatar.innerHTML = `<img src="${imgPath}" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;" onerror="this.src='https://cdn-icons-png.flaticon.com/512/4712/4712035.png';">`;
         }
     } else {
