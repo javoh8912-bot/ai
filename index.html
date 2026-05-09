@@ -709,7 +709,7 @@ input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; widt
           <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;">Ushbu rasm tizim faylidan olinadi va o'zgartirish cheklangan.</p>
           <div style="display:flex; align-items:center; gap:16px;">
             <div id="ai-avatar-preview" onclick="document.getElementById('ai-avatar-upload').click()" style="width:60px; height:60px; background:rgba(255,255,255,0.05); border-radius:12px; display:flex; align-items:center; justify-content:center; border:1px dashed var(--border); cursor:pointer; overflow:hidden;">
-                <img src="/assets/ai_avatar.png" style="width:100%; height:100%; object-fit:cover;">
+                <img src="/assets/ai_avatar.png" alt="AI Aureoo" style="width:100%; height:100%; object-fit:cover;">
             </div>
             <input type="file" id="ai-avatar-upload" style="display:none;" accept="image/*" onchange="handleAIAvatar(event)">
             <div style="font-size:11px; color:var(--text-muted);">
@@ -948,6 +948,22 @@ const DB = {
     saveChats: (chats) => {
         localStorage.setItem('ai_chats', JSON.stringify(chats));
         DB.syncChatsToServer();
+    },
+    updateChatHistory: (chatId, history) => {
+        const chats = DB.getChats();
+        const idx = chats[currentUser].findIndex(c => c.id === chatId);
+        if (idx !== -1) {
+            chats[currentUser][idx].history = history;
+            // Avtomatik nomlash (birinchi foydalanuvchi xabaridan)
+            if (history.length > 0 && (chats[currentUser][idx].title === "Yangi Suhbat" || chats[currentUser][idx].title.startsWith("Chat "))) {
+                const firstUserMsg = history.find(h => h.role === 'user')?.parts[0].text || "";
+                if (firstUserMsg) {
+                    chats[currentUser][idx].title = firstUserMsg.substring(0, 25).trim() + (firstUserMsg.length > 25 ? "..." : "");
+                }
+            }
+            DB.saveChats(chats);
+            renderChatList();
+        }
     },
     saveSetting: (key, value) => {
         localStorage.setItem(key, value);
@@ -1686,12 +1702,17 @@ function updateChatInDb() {
     const idx = chats[currentUser]?.findIndex(c => c.id === currentChatId);
     if (idx !== -1 && idx !== undefined) {
         chats[currentUser][idx].history = history;
-        const defaultTitles = ["Yangi Suhbat", "+ Yangi Suhbat", "+ Новый чат", "Новый чат", "+ New Chat", "New Chat"];
-        if (defaultTitles.includes(chats[currentUser][idx].title) && history.length > 0) {
-            chats[currentUser][idx].title = history[0].parts[0].text.substring(0, 20) + "...";
-            loadChatsList();
+        // Avtomatik nomlash (birinchi user xabaridan)
+        const currentTitle = chats[currentUser][idx].title;
+        const isDefault = currentTitle === "Yangi Suhbat" || currentTitle.startsWith("Chat ") || currentTitle === "New Chat";
+        if (isDefault && history.length > 0) {
+            const firstUserMsg = history.find(h => h.role === 'user')?.parts[0].text || "";
+            if (firstUserMsg) {
+                chats[currentUser][idx].title = firstUserMsg.substring(0, 25).trim() + (firstUserMsg.length > 25 ? "..." : "");
+            }
         }
         DB.saveChats(chats);
+        renderChatList();
     }
 }
 
@@ -1730,7 +1751,7 @@ function renderAdminData() {
     const preview = document.getElementById('ai-avatar-preview');
     if (preview) {
         if (aiAv) preview.innerHTML = `<img src="${aiAv}" style="width:100%;height:100%;border-radius:10px;object-fit:cover;">`;
-        else preview.innerHTML = `<img src="/assets/ai_avatar.png" style="width:100%;height:100%;border-radius:10px;object-fit:cover;">`;
+        else preview.innerHTML = `<img src="assets/ai_avatar.png" style="width:100%;height:100%;border-radius:10px;object-fit:cover;">`;
     }
 }
 
@@ -1860,7 +1881,7 @@ function appendMsgDOM(role, text) {
             avatar.innerHTML = `<img src="${globalAv}" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">`;
         } else {
             // Tizimdagi assets fayliga yo'naltirish
-            const imgPath = '/assets/ai_avatar.png';
+            const imgPath = 'assets/ai_avatar.png';
             avatar.innerHTML = `<img src="${imgPath}" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;" onerror="this.style.display='none'; this.parentElement.innerHTML='AI';">`;
         }
     } else {
