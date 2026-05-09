@@ -1828,13 +1828,13 @@ function appendMsgDOM(role, text) {
     
     if (role === 'ai') {
         const globalAv = localStorage.getItem('ai_global_avatar');
-        // Matn uzun bo'lsa rasm kichrayadi
-        let avatarSize = text.length > 400 ? '32px' : '44px';
+        // Matn uzun bo'lsa rasm kichrayadi (400 belgi chegara qilib olindi)
+        let avatarSize = text.length > 400 ? '30px' : '44px';
         avatar.style.width = avatarSize;
         avatar.style.height = avatarSize;
 
         if (globalAv) avatar.innerHTML = `<img src="${globalAv}" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">`;
-        else avatar.innerHTML = `<img src="assets/avatar_ai.png" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">`;
+        else avatar.innerHTML = `<img src="assets/avatar_ai.png" style="width:100%; height:100%; object-fit:cover; border-radius:inherit; display:block;">`;
     } else {
         const u = DB.getUsers().find(x => x.user === currentUser || x.login === currentUser);
         if (u && u.avatar) avatar.innerHTML = `<img src="${u.avatar}" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">`;
