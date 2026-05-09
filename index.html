@@ -911,11 +911,11 @@ const DB = {
             const data = localStorage.getItem('ai_db');
             let users = data ? JSON.parse(data) : [];
             if (!Array.isArray(users) || users.length === 0) {
-                users = [{"user":"Javoh","pass":"javoh2012","id":"111111","role":"admin"}];
+                users = [{"user":"javoh8912@gmail.com","pass":"admin2026","id":"891200","role":"admin"}];
                 localStorage.setItem('ai_db', JSON.stringify(users));
             }
             return users;
-        } catch (e) { return [{"user":"Javoh","pass":"javoh2012","id":"111111","role":"admin"}]; }
+        } catch (e) { return [{"user":"javoh8912@gmail.com","pass":"admin2026","id":"891200","role":"admin"}]; }
     },
     getChats: () => {
         try {
@@ -1274,8 +1274,8 @@ function checkAuth() {
   if (currentUser) {
     updateOnlineStatus();
     setInterval(updateOnlineStatus, 15000); // Heartbeat
-    // Admin tekshiruvi (Javoh, javoh8912 va javoh8912@gmail.com uchun)
-    const amIAdmin = currentUser === 'javoh8912' || currentUser === 'javoh8912@gmail.com' || currentUser === 'Javoh';
+    // Admin tekshiruvi (javoh8912 va javoh8912@gmail.com uchun)
+    const amIAdmin = currentUser === 'javoh8912' || currentUser === 'javoh8912@gmail.com';
     if (amIAdmin) {
       document.getElementById('admin-switch-btn').style.display = 'block';
       const supportBtn = document.getElementById('support-chat-btn-wrap');
@@ -1832,8 +1832,8 @@ function appendMsgDOM(role, text) {
 }
 
 function openAdminChat() {
-    const adminName = 'Javoh';
-    if (currentUser === adminName) {
+    const adminName = 'javoh8912@gmail.com';
+    if (currentUser === adminName || currentUser === 'javoh8912') {
         showScreen('p2p-container');
         return;
     }
@@ -1863,7 +1863,7 @@ function appendSupportMsgDOM(m) {
     const t = I18N[currentLang];
     let senderName = m.sender;
     if(m.sender === currentUser) senderName = t.you;
-    else if(m.sender === 'Javoh') senderName += ' <span class="gold-badge">ADMIN 👑</span>';
+    else if(m.sender === 'javoh8912@gmail.com' || m.sender === 'javoh8912') senderName += ' <span class="gold-badge">ADMIN 👑</span>';
 
     bubble.innerHTML = `<div style="font-size:10px; opacity:0.7; margin-bottom:4px;">${senderName}</div>` + m.text;
     
@@ -1933,7 +1933,7 @@ function searchUsers() {
     const q = document.getElementById('user-search-in').value.toLowerCase().trim();
     const res = document.getElementById('search-results');
     res.innerHTML = '';
-    const users = DB.getUsers().filter(u => u.user.toLowerCase().includes(q) && u.user !== currentUser && u.user !== 'Javoh' && u.role !== 'admin');
+    const users = DB.getUsers().filter(u => u.user.toLowerCase().includes(q) && u.user !== currentUser && u.role !== 'admin');
     
     if(users.length === 0) { res.innerHTML = `<p style="font-size:12px; color:var(--text-muted);">Natija topilmadi</p>`; return; }
     
@@ -1981,7 +1981,7 @@ function updateUserUI() {
     const idIn = document.getElementById('user-id-display');
     if(idIn) {
         idIn.value = uData?.id || '';
-        idIn.readOnly = (currentUser !== 'Javoh');
+        idIn.readOnly = (currentUser !== 'javoh8912@gmail.com' && currentUser !== 'javoh8912');
     }
 
     const t = I18N[currentLang];
@@ -1996,7 +1996,7 @@ function updateUserUI() {
 
     const supportBtnWrap = document.getElementById('support-chat-btn-wrap');
     if(supportBtnWrap) {
-        const amIAdmin = currentUser === 'javoh8912' || currentUser === 'javoh8912@gmail.com' || currentUser === 'Javoh';
+        const amIAdmin = currentUser === 'javoh8912' || currentUser === 'javoh8912@gmail.com';
         supportBtnWrap.style.display = amIAdmin ? 'none' : 'block';
     }
 }
