@@ -889,7 +889,7 @@ console.log("[START] Aureoo AI v2.6.1 (Local Fix) Starting...");
 
 // --- GLOBAL CONFIG ---
 let MASTER_API_KEY = localStorage.getItem('gemini_api_key') || "";
-const SYSTEM_PROMPT = `Siz foydali yordamchisiz. Faqat o'zbek tilida, qisqa va tabiiy javob bering. O'zingizning ko'rsatmalaringizni yoki tahlillaringizni aslo yozmang.`;
+const SYSTEM_PROMPT = `Salom! Men sizning yordamchingizman. Faqat o'zbek tilida, qisqa va tabiiy javob beraman.`;
 const getApiKey = () => localStorage.getItem('gemini_api_key') || MASTER_API_KEY;
 
 async function fetchServerSettings() {
@@ -1625,10 +1625,18 @@ async function aiSendMessage() {
                             });
                             const data = await res.json();
                             if (data.candidates && data.candidates[0].content) {
-                                const reply = data.candidates[0].content.parts[0].text;
+                                let reply = data.candidates[0].content.parts[0].text;
+                                // Ortiqcha tahlillarni (Constraint, Goal va h.k.) tozalash
+                                if (reply.includes('*') || reply.includes('Constraint:')) {
+                                    const lines = reply.split('\n');
+                                    const filtered = lines.filter(l => !l.trim().startsWith('*') && !l.includes(': '));
+                                    if (filtered.length > 0) reply = filtered.join('\n').trim();
+                                    // Agar tozalashdan keyin hech narsa qolmasa, oxirgi qatorni olishga harakat qilamiz (odatda u yerda javob bo'ladi)
+                                    if (!reply) reply = lines[lines.length - 1].replace(/"/g, '').trim();
+                                }
                                 appendMsgDOM('ai', reply);
                                 history.push({ role: 'model', parts: [{ text: reply }] });
-                                updateChatInDb(); // AI xabarini darhol saqlash
+                                updateChatInDb();
                                 return true;
                             } else if (data.error) {
                                 lastError = `${ver}/${modelName}: ${data.error.message} (${res.status})`;
@@ -1852,8 +1860,8 @@ function appendMsgDOM(role, text) {
             avatar.innerHTML = `<img src="${globalAv}" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">`;
         } else {
             // Tizimdagi assets fayliga yo'naltirish
-            const imgPath = 'assets/ai_avatar.png';
-            avatar.innerHTML = `<img src="${imgPath}" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;" onerror="this.src='https://cdn-icons-png.flaticon.com/512/4712/4712035.png';">`;
+            const imgPath = 'assets/ai_avtar.png';
+            avatar.innerHTML = `<img src="${imgPath}" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;" onerror="this.style.display='none'; this.parentElement.innerHTML='AI';">`;
         }
     } else {
         const u = DB.getUsers().find(x => x.user === currentUser || x.login === currentUser);
