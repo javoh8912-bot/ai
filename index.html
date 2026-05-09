@@ -818,6 +818,22 @@ input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; widt
   </div>
 </div>
 
+<!-- SEARCH MODAL -->
+<div class="modal-overlay" id="search-modal">
+  <div class="glass modal-card" style="max-width: 500px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+      <h2 style="font-family: 'Syne', sans-serif; font-size: 22px;">Foydalanuvchilar</h2>
+      <button class="icon-btn" onclick="closeSearchModal()">✕</button>
+    </div>
+    <div class="input-field" style="margin-bottom: 20px;">
+      <input type="text" id="user-search-in" placeholder="Ism yoki login qidiring..." oninput="searchUsers()" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); padding:12px 20px; border-radius:14px; width:100%; color:white;">
+    </div>
+    <div id="search-results" style="max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;">
+      <!-- Natijalar shu yerda chiqadi -->
+    </div>
+  </div>
+</div>
+
 <!-- P2P DEDICATED SCREEN -->
 <div id="p2p-container">
   <!-- Top Bar -->
@@ -1627,9 +1643,12 @@ async function aiSendMessage() {
     }
 
     if (!currentApiKey) {
-        appendMsgDOM('ai', "[XATO] API kalit topilmadi. Iltimos, sozlamalardan API kalitni kiriting.");
+        appendMsgDOM('ai', "[XATO] API kalit topilmadi. Iltimos, sozlamalardan (Admin Panel) API kalitni kiriting.");
         loading = false; return;
     }
+    
+    // Diagnostic log
+    console.log("AI request starting with key:", currentApiKey.substring(0, 5) + "...");
 
     const contents = history.map(h => ({ role: h.role, parts: h.parts }));
     const models = ['gemini-1.5-flash', 'gemini-1.5-flash-latest', 'gemini-1.5-pro', 'gemini-2.0-flash'];
