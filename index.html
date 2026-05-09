@@ -708,7 +708,10 @@ input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; widt
           <h4 style="margin-bottom:12px;">AI Avatar (Brending)</h4>
           <p style="font-size:12px; color:var(--text-muted); margin-bottom:16px;">Ushbu rasm tizim faylidan olinadi va o'zgartirish cheklangan.</p>
           <div style="display:flex; align-items:center; gap:16px;">
-            <div id="ai-avatar-preview" style="width:60px; height:60px; background:rgba(255,255,255,0.05); border-radius:12px; display:flex; align-items:center; justify-content:center; border:1px dashed var(--border);">A</div>
+            <div id="ai-avatar-preview" onclick="document.getElementById('ai-avatar-upload').click()" style="width:60px; height:60px; background:rgba(255,255,255,0.05); border-radius:12px; display:flex; align-items:center; justify-content:center; border:1px dashed var(--border); cursor:pointer; overflow:hidden;">
+                <img src="assets/ai_avatar.png" style="width:100%; height:100%; object-fit:cover;">
+            </div>
+            <input type="file" id="ai-avatar-upload" style="display:none;" accept="image/*" onchange="handleAIAvatar(event)">
             <div style="font-size:11px; color:var(--text-muted);">
                 <div>Joylashuv: <span style="color:var(--accent)">settings.json</span></div>
                 <div style="margin-top:4px; opacity:0.6;">(Base64 formatida saqlangan)</div>
@@ -1530,30 +1533,7 @@ function renderHistory() {
     msgs.scrollTop = msgs.scrollHeight;
 }
 
-function appendMsgDOM(role, text) {
-    const msgs = document.getElementById('messages'), wrap = document.createElement('div');
-    wrap.className = `msg-wrap ${role} msg`;
-    const avatar = document.createElement('div'); avatar.className = `avatar ${role}`;
-    if (role === 'ai') {
-        const globalAv = localStorage.getItem('ai_global_avatar');
-        // Matn uzun bo'lsa rasm kichrayadi (400 belgi chegara)
-        let avatarSize = text.length > 400 ? '32px' : '44px';
-        avatar.style.width = avatarSize;
-        avatar.style.height = avatarSize;
-        if (globalAv) avatar.innerHTML = `<img src="${globalAv}" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">`;
-        else avatar.innerHTML = `<img src="assets/avatar_ai.png" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">`;
-    }
-    else {
-        const u = DB.getUsers().find(x => x.user === currentUser || x.login === currentUser);
-        if (u && u.avatar) avatar.innerHTML = `<img src="${u.avatar}" style="width:100%; height:100%; object-fit:cover;">`;
-        else avatar.textContent = (u?.user || currentUser || 'U')[0].toUpperCase();
-    }
-    const bubble = document.createElement('div'); bubble.className = `bubble ${role}`;
-    bubble.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
-    if (role === 'user') { wrap.appendChild(bubble); wrap.appendChild(avatar); }
-    else { wrap.appendChild(avatar); wrap.appendChild(bubble); }
-    msgs.appendChild(wrap); msgs.scrollTop = msgs.scrollHeight;
-}
+
 
 // getApiKey already defined at top
 
@@ -1718,7 +1698,10 @@ function renderAdminData() {
     // AI Avatar Preview
     const aiAv = localStorage.getItem('ai_global_avatar');
     const preview = document.getElementById('ai-avatar-preview');
-    if (preview && aiAv) preview.innerHTML = `<img src="${aiAv}" style="width:100%;height:100%;border-radius:10px;object-fit:cover;">`;
+    if (preview) {
+        if (aiAv) preview.innerHTML = `<img src="${aiAv}" style="width:100%;height:100%;border-radius:10px;object-fit:cover;">`;
+        else preview.innerHTML = `<img src="assets/ai_avatar.png" style="width:100%;height:100%;border-radius:10px;object-fit:cover;">`;
+    }
 }
 
 async function saveNewApiKey() {
