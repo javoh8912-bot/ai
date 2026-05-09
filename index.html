@@ -553,9 +553,9 @@ input[type=range]:not(.premium-range)::-webkit-slider-thumb { height: 18px; widt
           <button class="icon-btn mobile-only" onclick="toggleSidebar()" style="width:32px; height:32px; border:none; background:rgba(255,255,255,0.05);">✕</button>
       </div>
       <button class="btn btn-primary" style="width: 100%; margin-bottom:8px;" onclick="createNewChat()">+ Yangi Suhbat</button>
-      <button class="btn" style="width: 100%; color: white; background:rgba(99,102,241,0.12); border:1px solid rgba(99,102,241,0.3); display:flex; align-items:center; justify-content:center; gap:8px;" onclick="openP2PScreen()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-        Chat
+      <button class="btn" style="width: 100%; color: white; background:rgba(99,102,241,0.12); border:1px solid rgba(99,102,241,0.3); display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:8px;" onclick="openSearchModal()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        Foydalanuvchilar
       </button>
     </div>
     <div class="chat-list" id="chat-list-dom"></div>
@@ -1636,7 +1636,16 @@ async function aiSendMessage() {
                 for (const ver of versions) {
                     const url = `https://generativelanguage.googleapis.com/${ver}/models/${modelName}:generateContent?key=${currentApiKey}`;
                     const bodies = [
-                        { contents, system_instruction: { parts: [{ text: SYSTEM_PROMPT }] } }
+                        { 
+                            contents, 
+                            system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+                            safetySettings: [
+                                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+                            ]
+                        }
                     ];
 
                     for (const body of bodies) {
