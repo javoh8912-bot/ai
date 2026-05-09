@@ -81,15 +81,42 @@ app.post('/api/settings', async (req, res) => {
 // AI Chats
 app.get('/api/chats', async (req, res) => {
     try {
-        const chats = await getKV('chats_ai', {});
-        res.json(chats);
+        const { user } = req.query;
+        if (user) {
+            // Get chats for a specific user from user-specific key
+            let userChats = await getKV(`chats_ai:${user}`, null);
+            if (userChats === null) {
+                // Migration: try to get from global object
+                const allChats = await getKV('chats_ai', {});
+                userChats = allChats[user] || [];
+            }
+            res.json(userChats);
+        } else {
+            // Get all chats (legacy or admin)
+            const chats = await getKV('chats_ai', {});
+            res.json(chats);
+        }
     } catch (e) { res.status(500).send(e.message); }
 });
 
 app.post('/api/chats', async (req, res) => {
     try {
-        await kv.set('chats_ai', req.body);
-        res.json({ status: 'success' });
+        const { user, chats } = req.body;
+        if (user && Array.isArray(chats)) {
+            // Save to user-specific key
+            await kv.set(`chats_ai:${user}`, chats);
+            
+            // Mirror to global chats_ai for admin panel compatibility
+            const allChats = await getKV('chats_ai', {});
+            allChats[user] = chats;
+            await kv.set('chats_ai', allChats);
+            
+            res.json({ status: 'success' });
+        } else {
+            // Legacy full sync
+            await kv.set('chats_ai', req.body);
+            res.json({ status: 'success' });
+        }
     } catch (e) { res.status(500).send(e.message); }
 });
 
