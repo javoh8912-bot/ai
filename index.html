@@ -1455,7 +1455,7 @@ function appendMsgDOM(role, text) {
     if (role === 'ai') {
         const globalAv = localStorage.getItem('ai_global_avatar');
         if (globalAv) avatar.innerHTML = `<img src="${globalAv}" style="width:100%; height:100%; object-fit:cover;">`;
-        else avatar.textContent = 'A';
+        else avatar.innerHTML = `<img src="assets/ai_avatar.png" style="width:100%; height:100%; object-fit:cover;">`;
     }
     else {
         const u = DB.getUsers().find(x => x.user === currentUser || x.login === currentUser);
